@@ -18,8 +18,6 @@ import helium314.keyboard.keyboard.internal.KeyboardCodesSet
 import helium314.keyboard.keyboard.internal.KeyboardIconsSet
 import helium314.keyboard.keyboard.internal.KeyboardParams
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode.checkAndConvertCode
-import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyLabel.convertFlorisLabel
-import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyLabel.rtlLabel
 import helium314.keyboard.latin.RichInputMethodManager
 import helium314.keyboard.latin.common.Constants
 import helium314.keyboard.latin.common.LocaleUtils.constructLocale
@@ -99,6 +97,8 @@ sealed interface KeyData : AbstractKeyData {
             val keys = mutableListOf<String>()
             if (!params.mId.deviceLocked)
                 keys.add("!icon/clipboard_normal_key|!code/key_clipboard")
+            if (!params.mId.deviceLocked)
+                keys.add("!icon/prompt_list_key|!code/key_prompt_list")
             if (!params.mId.emojiKeyEnabled && !params.mId.element.isNumberLayout)
                 keys.add("!icon/emoji_normal_key|!code/key_emoji")
             if (!params.mId.languageSwitchKeyEnabled && !params.mId.element.isNumberLayout && RichInputMethodManager.canSwitchLanguage())
@@ -107,6 +107,12 @@ sealed interface KeyData : AbstractKeyData {
                 keys.add("!icon/start_onehanded_mode_key|!code/key_toggle_onehanded")
             if (!params.mId.deviceLocked)
                 keys.add(ToolbarKey.FLOATING.name.lowercase())
+            if (!params.mId.deviceLocked)
+                keys.add("!icon/shortcut_key|!code/key_voice_input")
+            if (!params.mId.deviceLocked)
+                keys.add("!icon/log_keeper_key|!code/key_log_keeper")
+            if (!params.mId.deviceLocked)
+                keys.add("!icon/incognito_key|!code/key_unspecified") // security vault placeholder
             if (!params.mId.deviceLocked)
                 keys.add("!icon/settings_key|!code/key_settings")
             if (shouldShowTldPopups(params)) {

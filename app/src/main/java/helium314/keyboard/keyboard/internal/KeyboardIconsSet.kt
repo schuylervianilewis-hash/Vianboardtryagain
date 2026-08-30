@@ -94,6 +94,8 @@ class KeyboardIconsSet private constructor() {
             "incognito_key" to ToolbarKey.INCOGNITO.name.lowercase(Locale.US),
             "settings_key" to ToolbarKey.SETTINGS.name.lowercase(Locale.US),
             "start_onehanded_mode_key" to ToolbarKey.ONE_HANDED.name.lowercase(Locale.US),
+            "prompt_list_key" to ToolbarKey.COPY.name.lowercase(Locale.US),
+            "log_keeper_key" to ToolbarKey.SETTINGS.name.lowercase(Locale.US),
         )
 
         // todo: incognito and force incognito should not be the same? or not the same as toolbar key?

@@ -885,6 +885,15 @@ public final class InputLogic {
                 // {@link KeyboardSwitcher#onEvent(Event)}, or {@link #onPressKey(int,int,boolean)} and {@link #onReleaseKey(int,boolean)}.
                 // We need to switch to the shortcut IME. This is handled by LatinIME since the
                 // input logic has no business with IME switching.
+            case KeyCode.PROMPT_LIST:
+                KeyboardSwitcher.getInstance().setPromptKeyboard();
+                break;
+            case KeyCode.LOG_KEEPER:
+                mLatinIME.startActivity(
+                    new android.content.Intent(mLatinIME, helium314.keyboard.settings.LogKeeperActivity.class)
+                        .setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                );
+                break;
             case KeyCode.EMOJI, KeyCode.TOGGLE_ONE_HANDED_MODE, KeyCode.SWITCH_ONE_HANDED_MODE, KeyCode.TOGGLE_FLOATING_WINDOW,
                  KeyCode.KEY_REPEAT: // can be configured on main layout using !code/-11000, and we shouldn't crash on this in debug mode
                 break;

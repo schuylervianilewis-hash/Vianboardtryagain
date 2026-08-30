@@ -10,12 +10,14 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import helium314.keyboard.latin.ClipboardHistoryEntry
 import helium314.keyboard.latin.ClipboardHistoryManager
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.common.ColorType
+import helium314.keyboard.latin.database.PromptDao
 import helium314.keyboard.latin.settings.Settings
 
 class ClipboardAdapter(
@@ -103,7 +105,48 @@ class ClipboardAdapter(
         }
 
         override fun onLongClick(view: View): Boolean {
-            clipboardHistoryManager?.toggleClipPinned(view.tag as Long)
+            val clipId = view.tag as? Long ?: return false
+            val entry = clipboardHistoryManager?.getHistoryEntryContent(clipId) ?: return false
+            val popup = PopupMenu(view.context, view)
+            val isPinned = entry.isPinned
+            popup.menu.add(0, 1, 0, if (isPinned) "📌 Unpin" else "📌 Pin")
+            popup.menu.add(0, 2, 1, "📥 Move to Prompt List")
+            popup.menu.add(0, 3, 2, "🗑️ Delete")
+            popup.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    1 -> {
+                        clipboardHistoryManager?.toggleClipPinned(clipId)
+                        true
+                    }
+                    2 -> {
+                        // Move to Prompt List
+                        val clipText = entry.text
+                        if (!clipText.isNullOrEmpty()) {
+                            PromptDao.getInstance(view.context).addPrompt(clipText)
+                            val pos = absoluteAdapterPosition
+                            if (pos != RecyclerView.NO_POSITION) {
+                                if (isPinned) {
+                                    clipboardHistoryManager?.toggleClipPinned(clipId)
+                                }
+                                clipboardHistoryManager?.removeEntry(pos)
+                            }
+                        }
+                        true
+                    }
+                    3 -> {
+                        val pos = absoluteAdapterPosition
+                        if (pos != RecyclerView.NO_POSITION) {
+                            if (isPinned) {
+                                clipboardHistoryManager?.toggleClipPinned(clipId)
+                            }
+                            clipboardHistoryManager?.removeEntry(pos)
+                        }
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
             return true
         }
     }

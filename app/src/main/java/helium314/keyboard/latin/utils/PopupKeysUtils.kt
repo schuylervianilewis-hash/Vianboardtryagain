@@ -5,7 +5,7 @@ import helium314.keyboard.keyboard.Key
 import helium314.keyboard.keyboard.internal.KeySpecParser
 import helium314.keyboard.keyboard.internal.KeyboardParams
 import helium314.keyboard.keyboard.internal.PopupKeySpec
-import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyLabel.rtlLabel
+import helium314.keyboard.keyboard.internal.keyboard_parser.floris.rtlLabel
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.PopupSet
 import helium314.keyboard.latin.common.Constants.Separators
 

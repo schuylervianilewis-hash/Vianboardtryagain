@@ -57,6 +57,8 @@ public final class KeyboardCodesSet {
         "key_stop_onehanded", // keep name to avoid breaking custom layouts
         "key_switch_onehanded",
         "key_emoji_search",
+        "key_prompt_list",
+        "key_log_keeper",
     };
 
     private static final int[] DEFAULT = {
@@ -84,6 +86,8 @@ public final class KeyboardCodesSet {
         KeyCode.TOGGLE_ONE_HANDED_MODE,
         KeyCode.SWITCH_ONE_HANDED_MODE,
         KeyCode.EMOJI_SEARCH,
+        KeyCode.PROMPT_LIST,
+        KeyCode.LOG_KEEPER,
     };
 
     static {

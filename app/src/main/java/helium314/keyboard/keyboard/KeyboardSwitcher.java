@@ -34,6 +34,7 @@ import androidx.annotation.Nullable;
 
 import helium314.keyboard.event.Event;
 import helium314.keyboard.keyboard.clipboard.ClipboardHistoryView;
+import helium314.keyboard.keyboard.clipboard.PromptHistoryView;
 import helium314.keyboard.keyboard.emoji.EmojiPalettesView;
 import helium314.keyboard.keyboard.internal.KeyboardState;
 import helium314.keyboard.keyboard.internal.LayoutDirective;
@@ -76,6 +77,7 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
     private SuggestionStripView mSuggestionStripView;
     private FrameLayout mStripContainer;
     private ClipboardHistoryView mClipboardHistoryView;
+    private PromptHistoryView mPromptHistoryView;
     private TextView mFakeToastView;
     private ImageView mBackgroundGatheringIndicator;
     private LatinIME mLatinIME;
@@ -353,6 +355,33 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
         mClipboardHistoryView.startClipboardHistory(mLatinIME.getClipboardHistoryManager(), mKeyboardView.getKeyVisualAttribute(),
                 mLatinIME.getCurrentInputEditorInfo(), mLatinIME.mKeyboardActionListener);
         mClipboardHistoryView.setVisibility(View.VISIBLE);
+        if (mPromptHistoryView != null) mPromptHistoryView.setVisibility(View.GONE);
+    }
+
+    public void setPromptKeyboard() {
+        if (DEBUG_ACTION) {
+            Log.d(TAG, "setPromptKeyboard");
+        }
+        mMainKeyboardFrame.setVisibility(View.VISIBLE);
+        mKeyboardView.setVisibility(View.GONE);
+        mEmojiTabStripView.setVisibility(View.GONE);
+        mSuggestionStripView.setVisibility(View.GONE);
+        mStripContainer.setVisibility(getSecondaryStripVisibility());
+        mClipboardStripScrollView.setVisibility(View.GONE);
+        mEmojiPalettesView.setVisibility(View.GONE);
+        mClipboardHistoryView.setVisibility(View.GONE);
+        if (mPromptHistoryView != null) {
+            mPromptHistoryView.startPromptHistory(
+                    mLatinIME.mKeyboardActionListener,
+                    mKeyboardView.getKeyVisualAttribute(),
+                    mKeyboardLayoutSet,
+                    promptText -> {
+                        mLatinIME.onTextInput(promptText);
+                        return kotlin.Unit.INSTANCE;
+                    }
+            );
+            mPromptHistoryView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -657,8 +686,12 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
         return mClipboardHistoryView != null && mClipboardHistoryView.isShown();
     }
 
+    public boolean isShowingPromptHistory() {
+        return mPromptHistoryView != null && mPromptHistoryView.isShown();
+    }
+
     public boolean isShowingPopupKeysPanel() {
-        if (isShowingEmojiPalettes() || isShowingClipboardHistory()) {
+        if (isShowingEmojiPalettes() || isShowingClipboardHistory() || isShowingPromptHistory()) {
             return false;
         }
         return mKeyboardView.isShowingPopupKeysPanel();
@@ -677,6 +710,8 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
             return mEmojiPalettesView;
         } else if (isShowingClipboardHistory()) {
             return mClipboardHistoryView;
+        } else if (isShowingPromptHistory()) {
+            return mPromptHistoryView;
         }
         return mKeyboardView;
     }
@@ -710,6 +745,9 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
         if (mClipboardHistoryView != null) {
             mClipboardHistoryView.stopClipboardHistory();
         }
+        if (mPromptHistoryView != null) {
+            mPromptHistoryView.setVisibility(View.GONE);
+        }
     }
 
     public void trimMemory() {
@@ -738,6 +776,7 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
         mMainKeyboardFrame = mCurrentInputView.findViewById(R.id.main_keyboard_frame);
         mEmojiPalettesView = mCurrentInputView.findViewById(R.id.emoji_palettes_view);
         mClipboardHistoryView = mCurrentInputView.findViewById(R.id.clipboard_history_view);
+        mPromptHistoryView = mCurrentInputView.findViewById(R.id.prompt_history_view);
         mFakeToastView = mCurrentInputView.findViewById(R.id.fakeToast);
 
         mKeyboardViewWrapper = mCurrentInputView.findViewById(R.id.keyboard_view_wrapper);
