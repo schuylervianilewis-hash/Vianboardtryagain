@@ -68,3 +68,15 @@
 - **How it was verified**: Full local build verified with `compile_applet` (exit code 0, `BUILD SUCCESSFUL`).
 - **Deviation from requested**: None.
 - **Known issue or follow-up needed**: None.
+
+## Entry 005
+- **Timestamp**: 2026-09-01T10:59:00-07:00
+- **Requested**: Only English and French dictionaries in repo; prune/delete the rest
+- **Exact files touched**:
+  - `app/src/main/assets/dicts/*` (deleted all except `main_en-US.dict`, `main_en-GB.dict`, and `main_fr.dict`)
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**: Removed non-English and non-French dictionary binary files from `app/src/main/assets/dicts/`, leaving only `main_en-US.dict`, `main_en-GB.dict`, and `main_fr.dict`. Maintained `dictionaries_in_dict_repo.csv` and `known_dict_hashes.txt` for post-install download and file import support.
+- **How it was verified**: Local build verified with `compile_applet` (exit code 0, `BUILD SUCCESSFUL`).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: None.

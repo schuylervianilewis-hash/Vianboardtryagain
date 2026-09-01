@@ -22,6 +22,7 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **Phase 5: Package & Identity Alignment**: Updated `applicationId` to `shura.vianboard`, app name to `VianBoard`, sync provider authorities, and added GitHub Actions APK CI workflow.
 - **Phase 6: Modern Clipboard Engine**: Standardized 2-column responsive layout, quick-action micro-menu (Pin/Unpin, Delete, Paste), and unified 4-button footer (`[ABC] [SPACE] [⌫] [↵]`).
 - **Phase 7: LogKeeper UI & Diagnostics**: Integrated privacy-focused LogKeeper activity (`LogKeeperActivity.kt`) with master toggle, category-based log filtering (Errors/Warnings/Fatal), on-device file export, and resolved all project compilation dependencies.
+- **Phase 8: Dictionary Asset Optimization**: Pruned bundled dictionary assets to English (`main_en-US.dict`, `main_en-GB.dict`) and French (`main_fr.dict`) only, optimizing APK size while preserving post-install import and download capabilities for all other languages.
 
 ## 4. Change Ledger
 - **2026-08-27**: Cloned and imported complete source tree from `schuylervianilewis-hash/Vianboardtryagain`.
@@ -29,3 +30,4 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **2026-08-27**: Updated `applicationId` to `shura.vianboard`, app name resources to `VianBoard`, synced authorities to `shura.vianboard.clipprovider`/`provider`, configured `.github/workflows/build-apk.yml`, generated `gradlew` wrapper, and verified compilation.
 - **2026-08-27**: Enhanced modern clipboard modal with 3-action long-press menu (`Pin/Unpin`, `Delete`, `Paste`) and standardized unified 4-button bottom bar.
 - **2026-08-28**: Completed `LogKeeperActivity`, resolved `KeyLabel`, `PromptHistoryView`, and `KeyboardSwitcher` compilation dependencies, verified green build via `compile_applet`.
+- **2026-09-01**: Pruned non-English/French dictionary assets from `app/src/main/assets/dicts/`, verified build via `compile_applet`.
