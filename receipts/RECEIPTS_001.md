@@ -109,3 +109,21 @@
 - **Deviation from requested**: None.
 - **Known issue or follow-up needed**: None.
 
+## Entry 008
+- **Timestamp**: 2026-09-03T09:47:30-07:00
+- **Requested**: Fix keyboard layout, icons on special keys (enter, comma, period, shift, number), theme alignment to modern rounded style, and popup positioning.
+- **Exact files touched**:
+  - `app/src/main/java/helium314/keyboard/keyboard/internal/keyboard_parser/floris/KeyLabel.kt`
+  - `app/src/main/java/helium314/keyboard/keyboard/internal/keyboard_parser/floris/TextKeyData.kt`
+  - `app/src/main/java/helium314/keyboard/latin/utils/PopupKeysUtils.kt`
+  - `app/src/main/java/helium314/keyboard/latin/settings/Defaults.kt`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Restored official `KeyLabel.kt` and updated extension function imports (`convertFlorisLabel`, `rtlLabel`) in `TextKeyData.kt` and `PopupKeysUtils.kt`, properly mapping special keys (`delete`, `shift`, `action`, `symbol_alpha`, etc.) to vector icons rather than raw fallback text strings.
+  2. Aligned default appearance configuration in `Defaults.kt` to modern HeliBoard specifications: set `PREF_THEME_STYLE = STYLE_ROUNDED`, `PREF_THEME_KEY_BORDERS = true`, `PREF_SHOW_NUMBER_ROW = true`, and `PREF_SHOW_NUMBER_ROW_HINTS = true`.
+  3. Verified popup view architecture, vertical offsets, and positioning (`PopupKeysKeyboardView`, `MainKeyboardView`, `themes-rounded-base.xml`) matches upstream HeliBoard implementation.
+- **How it was verified**: Full local build verified with `compile_applet` (exit code 0, `BUILD SUCCESSFUL`).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: None. Ready for on-device manual QA.
+

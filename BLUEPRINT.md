@@ -25,6 +25,7 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **Phase 8: Dictionary Asset Optimization**: Pruned bundled dictionary assets to English (`main_en-US.dict`, `main_en-GB.dict`) and French (`main_fr.dict`) only, optimizing APK size while preserving post-install import and download capabilities for all other languages.
 - **Phase 9: CI Pipeline & JVM Metaspace Optimization**: Configured automated debug keystore generation in GitHub Actions workflow to prevent CI packaging failures, and configured `-XX:MaxMetaspaceSize=1024m` in `gradle.properties` to prevent daemon heap exhaustion.
 - **Phase 10: Repository & Resource Pruning**: Removed 98 redundant non-English/French localized string resource folders (`values-*`), updated `locales_config.xml`, added `resourceConfigurations += listOf("en", "fr")` and `ndk.abiFilters` (`arm64-v8a`, `x86_64`) in `app/build.gradle.kts`, added `.build-outputs/` to `.gitignore`, reducing res folder by 75% and source repo to <10MB.
+- **Phase 11: Modern Layout, Icons & Theme Realignment**: Restored official `KeyLabel.kt` icon mapping for functional keys, resolved extension function imports in `TextKeyData.kt` and `PopupKeysUtils.kt`, aligned defaults to modern Rounded M3 style with key borders and number row, and verified popup view offsets.
 
 ## 4. Change Ledger
 - **2026-08-27**: Cloned and imported complete source tree from `schuylervianilewis-hash/Vianboardtryagain`.
@@ -35,4 +36,5 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **2026-09-01**: Pruned non-English/French dictionary assets from `app/src/main/assets/dicts/`, verified build via `compile_applet`.
 - **2026-09-02**: Added Ensure Debug Keystore step to `.github/workflows/build-apk.yml` and tuned `gradle.properties` JVM args with `-XX:MaxMetaspaceSize=1024m`.
 - **2026-09-03**: Pruned 98 redundant `values-*` directories, configured `resourceConfigurations` and `ndk.abiFilters` in `app/build.gradle.kts`, aligned `locales_config.xml`, and added `.build-outputs/` to `.gitignore`.
+- **2026-09-03**: Restored functional key icon mappings in `KeyLabel.kt`, updated `TextKeyData.kt` and `PopupKeysUtils.kt`, and set default theme style to modern Rounded with key borders and dedicated number row in `Defaults.kt`.
 
