@@ -16,6 +16,11 @@ android {
     versionCode = 4100
     versionName = "4.1-beta1"
 
+    resourceConfigurations += listOf("en", "fr")
+    ndk {
+      abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
+    }
+
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 

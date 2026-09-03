@@ -21,3 +21,4 @@ debug.keystore
 *.p12
 *.apk
 *.aab
+.build-outputs/
