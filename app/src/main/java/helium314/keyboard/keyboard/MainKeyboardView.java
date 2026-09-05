@@ -519,12 +519,10 @@ public final class MainKeyboardView extends KeyboardView implements DrawingProxy
         final int pointX = (mConfigShowPopupKeysKeyboardAtTouchedPoint && !keyPreviewEnabled)
                 ? CoordinateUtils.x(lastCoords)
                 : key.getX() + key.getWidth() / 2;
-        // The popup keys keyboard is usually vertically aligned with the top edge of the parent key
-        // (plus vertical gap). If the key preview is enabled, the popup keys keyboard is vertically
-        // aligned with the bottom edge of the visible part of the key preview.
-        // {@code mPreviewVisibleOffset} has been set appropriately in
-        // {@link KeyboardView#showKeyPreview(PointerTracker)}.
-        final int pointY = key.getY() + mKeyPreviewDrawParams.getVisibleOffset();
+        // The popup keys keyboard is vertically elevated above the top edge of the parent key
+        // to provide a clear, floating preview gap as requested.
+        final int popupElevation = (int) (key.getHeight() * 0.16f);
+        final int pointY = key.getY() + mKeyPreviewDrawParams.getVisibleOffset() - popupElevation;
         popupKeysKeyboardView.showPopupKeysPanel(this, this, pointX, pointY, mKeyboardActionListener);
         return popupKeysKeyboardView;
     }

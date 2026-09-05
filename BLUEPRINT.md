@@ -42,6 +42,11 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
   - Direct crash dump copy to device `Download/` folder (`VianBoard_CRASH_<timestamp>.log`) alongside internal storage cache.
   - Added direct Settings screen entry for Log Keeper under About screen (`SettingsWithoutKey.LOG_KEEPER`).
   - Hardened JNI native initialization guards (`JniUtils.isNativeLoaded()`) across `ExpandableBinaryDictionary` and `BinaryDictionary` to prevent hard SIGSEGV crashes if native binaries are unloaded or missing.
+- **Phase 15: Safe Sidelining & Settings Preset Lockdown (Option B)**:
+  - **Asset Sidelining**: Moved all non-English/French keyboard layouts and locale popup assets into root `/sidelined_features/` (excluded from APK build, preserved safely in repo).
+  - **Locked Settings Presets**: Locked `Defaults.kt` and `SettingsValues.java` to the user's exact preset configuration: Blue Grey curated palette (#ECEFF1 bg, #FFFFFF keys, #CFD8DC funcs, #78909C accent), Rounded style with Key Borders enabled, Auto Day/Night disabled, Color Navigation Bar disabled, Popup on Keypress disabled (no tap popup preview, only long press), Number Row enabled with hints, Clipboard History enabled with 10 min retention and pinned items on top, Redundant Popups removed, Gesture input disabled, and Physical Keyboard Emoji Alt key stripped.
+  - **Calibrated Popup Elevation**: Elevated long-press popup panels in `MainKeyboardView.java` by +16% key height offset to provide a clear, floating preview gap above the parent button.
+  - **Physical Keyboard & Gesture Sidelining**: Excised physical keyboard emoji toggles from `AdvancedScreen.kt` and safely hardcoded gesture input to false to prevent runtime crashes.
 
 ## 4. Change Ledger
 - **2026-08-27**: Cloned and imported complete source tree from `schuylervianilewis-hash/Vianboardtryagain`.
@@ -56,4 +61,5 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **2026-09-03**: Implemented `LogCatcher` persistent engine + crash interceptor, redesigned `LogKeeperActivity` with `Log Keeper` and `All Running` tabs, updated icon to clean logbook vector, and realigned comma popup with `!autoColumnOrder!` grid formatting.
 - **2026-09-04**: Removed Custom Background Image Engine, Custom Font Loaders, External Gesture Binary Loader, and Holo Legacy Theme; replaced granular 20-slider hex picker with 6 curated high-contrast pre-tested color palettes; verified clean compilation.
 - **2026-09-05**: Added Log Keeper 2MB disk auto-rotation and fatal crash dumping directly to device `Download/` folder via MediaStore, guarded `ExpandableBinaryDictionary` and `BinaryDictionary` against uninitialized native JNI calls, and added Log Keeper entry to About screen settings.
+- **2026-09-05**: Implemented Safe Sidelining (non-EN/FR layouts & assets moved to `/sidelined_features/`), locked settings presets (Blue Grey theme, rounded key borders, no tap popup preview, number row with hints, 10m clipboard history, redundant popups removed), calibrated floating popup elevation in `MainKeyboardView.java`, and stripped physical keyboard settings from `AdvancedScreen.kt`.
 

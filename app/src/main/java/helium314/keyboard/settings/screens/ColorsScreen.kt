@@ -94,6 +94,16 @@ fun ColorsScreen(
 
     val palettes = listOf(
         CuratedPalette(
+            id = KeyboardTheme.THEME_BLUE_GRAY,
+            name = "Blue Grey",
+            description = "Refined blue-grey slate accents paired with clean, crisp surfaces",
+            backgroundColor = Color(0xFFECEFF1),
+            keyColor = Color(0xFFFFFFFF),
+            functionalKeyColor = Color(0xFFCFD8DC),
+            accentColor = Color(0xFF78909C),
+            textColor = Color(0xFF263238)
+        ),
+        CuratedPalette(
             id = KeyboardTheme.THEME_DYNAMIC,
             name = "Material You Dynamic",
             description = "Adaptive color scheme matching your system wallpaper accents",

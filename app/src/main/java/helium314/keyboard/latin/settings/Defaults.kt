@@ -20,10 +20,8 @@ import helium314.keyboard.latin.utils.defaultToolbarPref
 
 object Defaults {
     fun initDynamicDefaults(context: Context) {
-        PREF_GESTURE_DYNAMIC_PREVIEW_FOLLOW_SYSTEM = getTransitionAnimationScale(context) != 0.0f
-        val dm = context.resources.displayMetrics
-        val px600 = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 600f, dm)
-        PREF_POPUP_ON = dm.widthPixels >= px600 || dm.heightPixels >= px600
+        PREF_GESTURE_DYNAMIC_PREVIEW_FOLLOW_SYSTEM = false
+        PREF_POPUP_ON = false
     }
 
     // must correspond to a file name
@@ -46,11 +44,11 @@ object Defaults {
     private const val DEFAULT_SIZE_SCALE = 1.0f // 100%
     const val PREF_THEME_STYLE = KeyboardTheme.STYLE_ROUNDED
     fun PREF_ICON_STYLE(prefs: SharedPreferences) = prefs.getString(Settings.PREF_THEME_STYLE, PREF_THEME_STYLE)!!
-    const val PREF_THEME_COLORS = KeyboardTheme.THEME_LIGHT
-    const val PREF_THEME_COLORS_NIGHT = KeyboardTheme.THEME_DARK
+    const val PREF_THEME_COLORS = KeyboardTheme.THEME_BLUE_GRAY
+    const val PREF_THEME_COLORS_NIGHT = KeyboardTheme.THEME_BLUE_GRAY
     const val PREF_THEME_KEY_BORDERS = true
     @JvmField
-    val PREF_THEME_DAY_NIGHT = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+    val PREF_THEME_DAY_NIGHT = false
     const val PREF_CUSTOM_ICON_NAMES = ""
     const val PREF_TOOLBAR_CUSTOM_KEY_CODES = ""
     const val PREF_AUTO_CAP = true
@@ -59,9 +57,9 @@ object Defaults {
     const val PREF_SOUND_ON = false
     const val PREF_SUGGEST_EMOJIS = true
     const val PREF_INLINE_EMOJI_SEARCH = true
-    const val PREF_SHOW_EMOJI_DESCRIPTIONS = true
+    const val PREF_SHOW_EMOJI_DESCRIPTIONS = false
     @JvmField
-    var PREF_POPUP_ON = true
+    var PREF_POPUP_ON = false
     const val PREF_AUTO_CORRECTION = true
     const val PREF_MORE_AUTO_CORRECTION = false
     const val PREF_AUTO_CORRECT_CONFIDENCE = 0.24f
@@ -79,9 +77,7 @@ object Defaults {
     const val PREF_LANGUAGE_SWITCH_KEY = "internal"
     const val PREF_SHOW_EMOJI_KEY = false
     const val PREF_VARIABLE_TOOLBAR_DIRECTION = true
-    const val PREF_ADDITIONAL_SUBTYPES = "de${Separators.SET}${ExtraValue.KEYBOARD_LAYOUT_SET}=MAIN:qwerty${Separators.SETS}" +
-            "fr${Separators.SET}${ExtraValue.KEYBOARD_LAYOUT_SET}=MAIN:qwertz${Separators.SETS}" +
-            "hu${Separators.SET}${ExtraValue.KEYBOARD_LAYOUT_SET}=MAIN:qwerty"
+    const val PREF_ADDITIONAL_SUBTYPES = "fr${Separators.SET}${ExtraValue.KEYBOARD_LAYOUT_SET}=MAIN:azerty"
     const val PREF_ENABLE_SPLIT_KEYBOARD = false
     @JvmField
     val PREF_SPLIT_SPACER_SCALE = Array(4) { DEFAULT_SIZE_SCALE }
@@ -115,16 +111,16 @@ object Defaults {
     const val PREF_BIGRAM_PREDICTIONS = true
     const val PREF_SUGGEST_PUNCTUATION = false
     const val PREF_SUGGEST_CLIPBOARD_CONTENT = true
-    const val PREF_GESTURE_INPUT = true
+    const val PREF_GESTURE_INPUT = false
     const val PREF_VIBRATION_DURATION_SETTINGS = -1
     const val PREF_KEYPRESS_SOUND_VOLUME = -0.01f
     const val PREF_KEY_LONGPRESS_TIMEOUT = 300
-    const val PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY = true
-    const val PREF_GESTURE_PREVIEW_TRAIL = true
-    const val PREF_GESTURE_FLOATING_PREVIEW_TEXT = true
-    const val PREF_GESTURE_FLOATING_PREVIEW_DYNAMIC = true
+    const val PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY = false
+    const val PREF_GESTURE_PREVIEW_TRAIL = false
+    const val PREF_GESTURE_FLOATING_PREVIEW_TEXT = false
+    const val PREF_GESTURE_FLOATING_PREVIEW_DYNAMIC = false
     @JvmField
-    var PREF_GESTURE_DYNAMIC_PREVIEW_FOLLOW_SYSTEM = true
+    var PREF_GESTURE_DYNAMIC_PREVIEW_FOLLOW_SYSTEM = false
     const val PREF_GESTURE_SPACE_AWARE = false
     const val PREF_GESTURE_FAST_TYPING_COOLDOWN = 500
     const val PREF_GESTURE_TRAIL_FADEOUT_DURATION = 800
@@ -154,11 +150,11 @@ object Defaults {
     const val PREF_ENABLE_CLIPBOARD_HISTORY = true
     const val PREF_CLIPBOARD_HISTORY_RETENTION_TIME = 10 // minutes
     const val PREF_CLIPBOARD_HISTORY_PINNED_FIRST = true
-    const val PREF_CLIPBOARD_USE_FILES = true
+    const val PREF_CLIPBOARD_USE_FILES = false
     const val PREF_CLIPBOARD_FILES_SIZE_LIMIT = 20 // megabytes
     const val PREF_ADD_TO_PERSONAL_DICTIONARY = false
     @JvmField
-    val PREF_NAVBAR_COLOR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+    val PREF_NAVBAR_COLOR = false
     const val PREF_ENABLED_SUBTYPES = ""
     const val PREF_SELECTED_SUBTYPE = ""
     const val PREF_URL_DETECTION = false
@@ -176,7 +172,7 @@ object Defaults {
     const val PREF_ABC_AFTER_CLIP = false
     const val PREF_ABC_AFTER_SYMBOL_SPACE = true
     const val PREF_ABC_AFTER_NUMPAD_SPACE = false
-    const val PREF_REMOVE_REDUNDANT_POPUPS = false
+    const val PREF_REMOVE_REDUNDANT_POPUPS = true
     const val PREF_SPACE_BAR_TEXT = ""
     const val PREF_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss"
     const val PREF_RECENT_EMOJIS = ""

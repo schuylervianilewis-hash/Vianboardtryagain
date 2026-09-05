@@ -205,5 +205,28 @@
 - **Deviation from requested**: None.
 - **Known issue or follow-up needed**: Ready for on-device manual QA.
 
+## Entry 012
+- **Timestamp**: 2026-09-05T13:12:00-07:00
+- **Requested**: Safe sidelining (English and French only; layouts except symbol, more symbols, numberpad, clipboard, and emoji moved to sidelined_features; gesture typing, physical keyboard, and other languages sidelined; lock settings to user preset under Option B: Read-Only/Stripped UI; calibrate popup elevation above parent key; no tap popup preview, only long press).
+- **Exact files touched**:
+  - `/sidelined_features/` (new directory preserving unused layouts, assets, and locale key texts)
+  - `app/src/main/java/helium314/keyboard/keyboard/KeyboardTheme.kt`
+  - `app/src/main/java/helium314/keyboard/settings/screens/ColorsScreen.kt`
+  - `app/src/main/java/helium314/keyboard/latin/settings/Defaults.kt`
+  - `app/src/main/java/helium314/keyboard/latin/settings/SettingsValues.java`
+  - `app/src/main/java/helium314/keyboard/settings/screens/AdvancedScreen.kt`
+  - `app/src/main/java/helium314/keyboard/keyboard/MainKeyboardView.java`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Created `/sidelined_features/` and safely relocated non-English/French layouts, assets, and locale key texts out of the Android source tree so they are excluded from the APK build while preserved intact in the repository.
+  2. Locked default settings in `Defaults.kt` and `SettingsValues.java` according to user's screenshots (Option B): Blue Grey theme, Rounded key style with borders enabled, Auto Day/Night disabled, Navigation Bar coloring disabled, Tap Keypress Popup Preview permanently disabled (`mKeyPreviewPopupOn = false`), Number Row enabled with hints, Clipboard History enabled with 10 min retention and pinned first, Redundant Popups removed, Gesture Typing permanently disabled (`mGestureInputEnabled = false`), and Physical Keyboard Emoji Alt key stripped from UI and defaults.
+  3. Added Blue Grey curated palette (#ECEFF1 bg, #FFFFFF keys, #CFD8DC functional keys, #78909C accent, #263238 text) to `ColorsScreen.kt` and `KeyboardTheme.kt`.
+  4. Excised `Settings.PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY` from `AdvancedScreen.kt`.
+  5. Calibrated popup elevation in `MainKeyboardView.java` by +16% key height offset to provide a clean floating gap above the parent key on long press.
+- **How it was verified**: Full local build verified with `compile_applet` (exit code 0, `BUILD SUCCESSFUL`).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Ready for on-device manual QA.
+
 
 
