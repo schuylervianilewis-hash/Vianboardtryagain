@@ -538,6 +538,7 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onCreate() {
+        helium314.keyboard.latin.utils.LogCatcher.INSTANCE.markComponentActive("LatinIME", "Input Service", "Active");
         mSettings.startListener();
         KeyboardIconsSet.Companion.getInstance().loadIcons(this);
         mRichImm = RichInputMethodManager.getInstance();
@@ -705,6 +706,7 @@ public class LatinIME extends InputMethodService implements
         super.onDestroy();
         mHandler.removeCallbacksAndMessages(null);
         deallocateMemory();
+        helium314.keyboard.latin.utils.LogCatcher.INSTANCE.markComponentInactive("LatinIME", "Destroyed");
     }
 
     private boolean isImeSuppressedByHardwareKeyboard() {

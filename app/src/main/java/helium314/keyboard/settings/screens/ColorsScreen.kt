@@ -1,69 +1,78 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.settings.screens
 
-import android.app.Activity
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import android.os.Build
+import kotlinx.serialization.Serializable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import helium314.keyboard.keyboard.ColorSetting
+import androidx.core.content.edit
+import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.keyboard.KeyboardTheme
 import helium314.keyboard.latin.R
-import helium314.keyboard.latin.common.ColorType
-import helium314.keyboard.latin.common.default
-import helium314.keyboard.latin.common.encodeBase36
 import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
-import helium314.keyboard.latin.utils.Log
+import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.getActivity
 import helium314.keyboard.latin.utils.prefs
-import helium314.keyboard.latin.utils.CloseIcon
-import helium314.keyboard.settings.SearchScreen
-import helium314.keyboard.settings.SettingsActivity
-import helium314.keyboard.latin.utils.Theme
-import helium314.keyboard.settings.contentTextDirectionStyle
-import helium314.keyboard.settings.dialogs.ColorPickerDialog
 import helium314.keyboard.latin.utils.previewDark
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import helium314.keyboard.settings.SettingsActivity
 
+data class CuratedPalette(
+    val id: String,
+    val name: String,
+    val description: String,
+    val backgroundColor: Color,
+    val keyColor: Color,
+    val functionalKeyColor: Color,
+    val accentColor: Color,
+    val textColor: Color,
+    val isSupported: Boolean = true
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ColorsScreen(
     isNight: Boolean,
@@ -72,181 +81,269 @@ fun ColorsScreen(
 ) {
     val ctx = LocalContext.current
     val prefs = ctx.prefs()
-    val b = (ctx.getActivity() as? SettingsActivity)?.prefChanged?.collectAsState()
-    if ((b?.value ?: 0) < 0)
-        Log.v("irrelevant", "stupid way to trigger recomposition on preference change")
+    val prefKey = if (isNight) Settings.PREF_THEME_COLORS_NIGHT else Settings.PREF_THEME_COLORS
 
-    val themeName = theme ?: if (isNight) prefs.getString(Settings.PREF_THEME_COLORS_NIGHT, Defaults.PREF_THEME_COLORS_NIGHT)!!
-        else prefs.getString(Settings.PREF_THEME_COLORS, Defaults.PREF_THEME_COLORS)!!
-    var newThemeName by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue(themeName)) }
+    val currentTheme = theme ?: prefs.getString(prefKey, if (isNight) Defaults.PREF_THEME_COLORS_NIGHT else Defaults.PREF_THEME_COLORS)!!
+    var selectedThemeId by rememberSaveable { mutableStateOf(currentTheme) }
 
-    // is there really no better way of only setting forceOpposite while the screen is shown (and not paused)?
-    // lifecycle stuff is weird, there is no pause and similar when activity is paused
     DisposableEffect(isNight) {
-        onDispose { // works on pressing back
+        onDispose {
             (ctx.getActivity() as? SettingsActivity)?.setForceTheme(null, null)
         }
     }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
-    LaunchedEffect(lifecycleState) {
-        if (lifecycleState == Lifecycle.State.RESUMED) {
-            (ctx.getActivity() as? SettingsActivity)?.setForceTheme(newThemeName.text, isNight)
-        }
-    }
 
-    val moreColors = KeyboardTheme.readUserMoreColors(prefs, newThemeName.text)
-    val userColors = KeyboardTheme.readUserColors(prefs, newThemeName.text)
-    val shownColors = if (moreColors == 2) {
-        val fallbackColors = KeyboardTheme.readUserColorTheme(
-            prefs.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE)!!,
-            prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS),
-        userColors, ctx, isNight, null
-        )
-        val allColors = KeyboardTheme.readUserAllColors(prefs, newThemeName.text, fallbackColors)
-        ColorType.entries.map {
-            ColorSetting(it.name, null, allColors[it] ?: it.default())
-        }
-    } else {
-        val toDisplay = colorPrefsAndResIds.map { (colorName, resId) ->
-            val cs = userColors.firstOrNull { it.name == colorName } ?: ColorSetting(colorName, true, null)
-            cs.displayName = stringResource(resId)
-            cs
-        }
-        val colorsToHide = getColorPrefsToHideInitially(prefs)
-        if (moreColors == 1) toDisplay
-        else toDisplay.filter { it.color != null || it.name !in colorsToHide }
-    }
-    fun ColorSetting.displayColor() = if (auto == true) KeyboardTheme.determineUserColor(userColors, ctx, name, isNight)
-        else color ?: KeyboardTheme.determineUserColor(userColors, ctx, name, isNight)
-
-    var chosenColorString: String by rememberSaveable { mutableStateOf("") }
-    val chosenColor = runCatching { Json.decodeFromString<ColorSetting?>(chosenColorString) }.getOrNull()
-    val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
-        val uri = result.data?.data ?: return@rememberLauncherForActivityResult
-        ctx.getActivity()?.contentResolver?.openOutputStream(uri)?.writer()?.use { it.write(getColorString(prefs, newThemeName.text)) }
-    }
-    SearchScreen(
-        title = {
-            var nameValid by rememberSaveable { mutableStateOf(true) }
-            var nameField by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(newThemeName) }
-            TextField(
-                value = nameField,
-                onValueChange = {
-                    nameValid = KeyboardTheme.renameUserColors(newThemeName.text, it.text, prefs)
-                    if (nameValid) {
-                        newThemeName = it
-                        SettingsActivity.forceTheme = newThemeName.text
-                    }
-                    nameField = it
-                },
-                isError = !nameValid,
-//                supportingText = { if (!nameValid) Text(stringResource(R.string.name_invalid)) } // todo: this is cutting off bottom half of the actual text...
-                trailingIcon = { if (!nameValid) CloseIcon(R.string.name_invalid) },
-                singleLine = true,
-                textStyle = contentTextDirectionStyle,
-            )
-        },
-        menu = listOf(
-            stringResource(R.string.main_colors) to { KeyboardTheme.writeUserMoreColors(prefs, newThemeName.text, 0) },
-            stringResource(R.string.more_colors) to { KeyboardTheme.writeUserMoreColors(prefs, newThemeName.text, 1) },
-            stringResource(R.string.all_colors) to { KeyboardTheme.writeUserMoreColors(prefs, newThemeName.text, 2) },
-            stringResource(R.string.button_save_file) to {
-                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-                    .addCategory(Intent.CATEGORY_OPENABLE)
-                    .putExtra(Intent.EXTRA_TITLE,"${newThemeName.text}.json")
-                    .setType("application/json")
-                saveLauncher.launch(intent)
-            },
-            stringResource(R.string.copy_to_clipboard) to {
-                val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                cm.setPrimaryClip(ClipData.newPlainText("HeliBoard theme", getColorString(prefs, newThemeName.text)))
-            },
+    val palettes = listOf(
+        CuratedPalette(
+            id = KeyboardTheme.THEME_DYNAMIC,
+            name = "Material You Dynamic",
+            description = "Adaptive color scheme matching your system wallpaper accents",
+            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+            keyColor = MaterialTheme.colorScheme.surface,
+            functionalKeyColor = MaterialTheme.colorScheme.secondaryContainer,
+            accentColor = MaterialTheme.colorScheme.primary,
+            textColor = MaterialTheme.colorScheme.onSurface,
+            isSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         ),
-        onClickBack = onClickBack,
-        filteredItems = { search ->
-            val result = shownColors.filter { color ->
-                color.displayName.split(" ", "_").any { it.startsWith(search, true) }
-            }
-            if (moreColors == 2) result.toMutableList<ColorSetting?>().apply { add(0, null) }
-            else result
-        },
-        itemContent = { colorSetting ->
-            if (colorSetting == null)
-                Text( // not a colorSetting, but still best done as part of the list
-                    stringResource(R.string.all_colors_warning),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            else
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .clickable { chosenColorString = Json.encodeToString(colorSetting) }
-                ) {
-                    Spacer(
-                        modifier = Modifier
-                            .background(Color(colorSetting.displayColor()), shape = CircleShape)
-                            .size(50.dp)
-                    )
-                    Column(Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp)) {
-                        Text(colorSetting.displayName)
-                        if (colorSetting.auto == true)
-                            CompositionLocalProvider(
-                                LocalTextStyle provides MaterialTheme.typography.bodyMedium,
-                                LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
-                            ) {
-                                Text(stringResource(R.string.auto_user_color))
-                            }
-                    }
-                    if (colorSetting.auto != null)
-                        Switch(colorSetting.auto, onCheckedChange = { checked ->
-                            val oldUserColors = KeyboardTheme.readUserColors(prefs, newThemeName.text)
-                            val newUserColors = (oldUserColors + ColorSetting(colorSetting.name, checked, colorSetting.color))
-                                .reversed().distinctBy { it.displayName }
-                            KeyboardTheme.writeUserColors(prefs, newThemeName.text, newUserColors)
-                        })
-                }
-        }
-    )
-    if (chosenColor != null) {
-        val oldAllColors = KeyboardTheme.readUserAllColors(prefs, newThemeName.text, null)
-        ColorPickerDialog(
-            onDismissRequest = { chosenColorString = "" },
-            initialColor = chosenColor.displayColor(),
-            title = chosenColor.displayName,
-            showDefault = moreColors == 2 && oldAllColors.contains(ColorType.valueOf(chosenColor.name)),
-            onDefault = {
-                // clear the color
-                oldAllColors.remove(ColorType.valueOf(chosenColor.name))
-                KeyboardTheme.writeUserAllColors(prefs, newThemeName.text, oldAllColors)
-            }
-        ) { color ->
-            if (moreColors == 2) {
-                oldAllColors[ColorType.valueOf(chosenColor.name)] = color
-                KeyboardTheme.writeUserAllColors(prefs, newThemeName.text, oldAllColors)
-            } else {
-                val oldUserColors = KeyboardTheme.readUserColors(prefs, newThemeName.text)
-                val newUserColors = (oldUserColors + ColorSetting(chosenColor.name, false, color))
-                    .reversed().distinctBy { it.displayName }
-                KeyboardTheme.writeUserColors(prefs, newThemeName.text, newUserColors)
-            }
-        }
-    }
-}
+        CuratedPalette(
+            id = KeyboardTheme.THEME_BLACK,
+            name = "AMOLED Pure Black",
+            description = "Deep pitch black #000000 background with high-contrast keys to save battery",
+            backgroundColor = Color(0xFF000000),
+            keyColor = Color(0xFF1E1E1E),
+            functionalKeyColor = Color(0xFF2C2C2C),
+            accentColor = Color(0xFF80D8FF),
+            textColor = Color(0xFFFFFFFF)
+        ),
+        CuratedPalette(
+            id = KeyboardTheme.THEME_DARKER,
+            name = "Slate Dark",
+            description = "Refined slate charcoal background with high-contrast keys for low-light use",
+            backgroundColor = Color(0xFF1C2226),
+            keyColor = Color(0xFF263238),
+            functionalKeyColor = Color(0xFF1E282D),
+            accentColor = Color(0xFF4DD0E1),
+            textColor = Color(0xFFECEFF1)
+        ),
+        CuratedPalette(
+            id = KeyboardTheme.THEME_LIGHT,
+            name = "Clean White",
+            description = "Crisp, bright, high-contrast light theme with optimal legibility",
+            backgroundColor = Color(0xFFECEFF1),
+            keyColor = Color(0xFFFFFFFF),
+            functionalKeyColor = Color(0xFFCFD8DC),
+            accentColor = Color(0xFF009688),
+            textColor = Color(0xFF263238)
+        ),
+        CuratedPalette(
+            id = KeyboardTheme.THEME_FOREST,
+            name = "Forest Green",
+            description = "Deep evergreen tones paired with soft sage functional accents",
+            backgroundColor = Color(0xFF15261F),
+            keyColor = Color(0xFF20382E),
+            functionalKeyColor = Color(0xFF28483B),
+            accentColor = Color(0xFF81C784),
+            textColor = Color(0xFFF1F8E9)
+        ),
+        CuratedPalette(
+            id = KeyboardTheme.THEME_INDIGO,
+            name = "Deep Indigo",
+            description = "Rich midnight indigo tones paired with vibrant periwinkle accents",
+            backgroundColor = Color(0xFF181A2A),
+            keyColor = Color(0xFF23273E),
+            functionalKeyColor = Color(0xFF2D3252),
+            accentColor = Color(0xFF7986CB),
+            textColor = Color(0xFFE8EAF6)
+        )
+    ).filter { it.isSupported }
 
-private fun getColorString(prefs: SharedPreferences, themeName: String): String {
-    val moreColors = KeyboardTheme.readUserMoreColors(prefs, themeName)
-    if (moreColors == 2) {
-        val colors = KeyboardTheme.readUserAllColors(prefs, themeName, null).map { it.key.name to it.value }
-        return Json.encodeToString((colors + (encodeBase36(themeName) to 0)).toMap()) // put theme name in here too
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.theme_colors)) },
+                navigationIcon = {
+                    IconButton(onClick = onClickBack) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_left),
+                            contentDescription = null
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                Text(
+                    text = if (isNight) "Night Mode Palette" else "Day Mode Palette",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = "Select a pre-tested, high-contrast palette calibrated for legibility and aesthetic balance.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            items(palettes, key = { it.id }) { palette ->
+                val isSelected = selectedThemeId == palette.id
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable {
+                            selectedThemeId = palette.id
+                            prefs.edit { putString(prefKey, palette.id) }
+                            (ctx.getActivity() as? SettingsActivity)?.setForceTheme(palette.id, isNight)
+                            KeyboardSwitcher.getInstance().setThemeNeedsReload()
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                        }
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    border = if (isSelected) {
+                        CardDefaults.outlinedCardBorder().copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                            width = 2.dp
+                        )
+                    } else null
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedThemeId = palette.id
+                                    prefs.edit { putString(prefKey, palette.id) }
+                                    (ctx.getActivity() as? SettingsActivity)?.setForceTheme(palette.id, isNight)
+                                    KeyboardSwitcher.getInstance().setThemeNeedsReload()
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    text = palette.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = palette.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(14.dp))
+
+                        // Palette preview swatch
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(palette.backgroundColor)
+                                .border(1.dp, Color.Gray.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Key 1
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 44.dp, height = 36.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(palette.keyColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Q",
+                                        color = palette.textColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+
+                                // Key 2
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 44.dp, height = 36.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(palette.keyColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "W",
+                                        color = palette.textColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+
+                                // Functional Key
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 52.dp, height = 36.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(palette.functionalKeyColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "123",
+                                        color = palette.textColor,
+                                        fontWeight = FontWeight.Medium,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+
+                                // Accent Key (Enter / Action)
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 56.dp, height = 36.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(palette.accentColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Spacer(Modifier.height(16.dp))
+            }
+        }
     }
-    val colors = KeyboardTheme.readUserColors(prefs, themeName).associate { it.name to (it.color to (it.auto == true)) }
-    return Json.encodeToString(SaveThoseColors(themeName, moreColors, colors))
 }
 
 @Serializable
@@ -264,12 +361,6 @@ val colorPrefsAndResIds = listOf(
     KeyboardTheme.COLOR_ACCENT to R.string.select_color_accent,
     KeyboardTheme.COLOR_GESTURE to R.string.select_color_gesture,
 )
-
-private fun getColorPrefsToHideInitially(prefs: SharedPreferences): List<String> {
-    return listOf(KeyboardTheme.COLOR_SUGGESTION_TEXT, KeyboardTheme.COLOR_SPACEBAR_TEXT, KeyboardTheme.COLOR_GESTURE) +
-            if (prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, false)) listOf(KeyboardTheme.COLOR_SPACEBAR_TEXT)
-            else listOf(KeyboardTheme.COLOR_FUNCTIONAL_KEYS)
-}
 
 @Preview
 @Composable

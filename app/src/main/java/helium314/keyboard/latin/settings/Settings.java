@@ -213,9 +213,6 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     private SettingsValues mSettingsValues;
     private final ReentrantLock mSettingsValuesLock = new ReentrantLock();
 
-    // static cache for background images to avoid potentially slow reload on every settings reload
-    private final static Drawable[] sCachedBackgroundImages = new Drawable[4];
-
     private static final Settings sInstance = new Settings();
 
     // preferences that are not used in SettingsValues and thus should not trigger reload when changed
@@ -496,31 +493,6 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
             && mPrefs.getBoolean(PREF_SHOW_ONLY_TOOLBAR_WITH_HARDWARE_KEYBOARD, Defaults.PREF_SHOW_ONLY_TOOLBAR_WITH_HARDWARE_KEYBOARD);
     }
 
-    @Nullable public static Drawable readUserBackgroundImage(final Context context, final boolean night) {
-        final boolean landscape = context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-        final int index = (night ? 1 : 0) + (landscape ? 2 : 0);
-        if (sCachedBackgroundImages[index] != null) return sCachedBackgroundImages[index];
-
-        File image = getCustomBackgroundFile(context, night, landscape);
-        if (!image.isFile() && landscape)
-            image = getCustomBackgroundFile(context, night, false); // fall back to portrait image for historic reasons
-        if (!image.isFile()) return null;
-        try {
-            sCachedBackgroundImages[index] = new BitmapDrawable(context.getResources(), BitmapFactory.decodeFile(image.getAbsolutePath()));
-            return sCachedBackgroundImages[index];
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static File getCustomBackgroundFile(final Context context, final boolean night, final boolean landscape) {
-        return new File(DeviceProtectedUtils.getFilesDir(context), "custom_background_image" + (landscape ? "_landscape" : "") + (night ? "_night" : ""));
-    }
-
-    public static void clearCachedBackgroundImages() {
-        Arrays.fill(sCachedBackgroundImages, null);
-    }
-
     public static Context getDayNightContext(final Context context, final boolean wantNight) {
         final boolean isNight = ResourceUtils.isNight(context.getResources());
         if (isNight == wantNight)
@@ -557,14 +529,6 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
 
     public Integer getCustomToolbarLongpressCode(ToolbarKey key) {
         return ToolbarUtilsKt.getCustomLongpressKeyCode(key, mPrefs);
-    }
-
-    public static File getCustomFontFile(final Context context) {
-        return new File(DeviceProtectedUtils.getFilesDir(context), "custom_font");
-    }
-
-    public static File getCustomEmojiFontFile(final Context context) {
-        return new File(DeviceProtectedUtils.getFilesDir(context), "custom_emoji_font");
     }
 
     // "default" layout as in this is used if nothing else is specified in the subtype

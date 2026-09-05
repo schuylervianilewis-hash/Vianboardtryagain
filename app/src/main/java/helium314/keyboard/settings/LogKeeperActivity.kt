@@ -2,8 +2,12 @@
 package helium314.keyboard.settings
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -19,14 +23,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,32 +42,37 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import helium314.keyboard.latin.R
-import helium314.keyboard.latin.utils.Log
-import helium314.keyboard.latin.utils.LogLine
+import helium314.keyboard.latin.utils.LogCatcher
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.prefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 class LogKeeperActivity : ComponentActivity() {
@@ -84,14 +97,19 @@ fun LogKeeperScreen(onBack: () -> Unit) {
     val prefs = context.prefs()
     val scope = rememberCoroutineScope()
 
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
     var isEnabled by remember {
         mutableStateOf(prefs.getBoolean("pref_log_keeper_enabled", true))
     }
 
-    var logLines by remember {
-        mutableStateOf(
-            Log.getLog().filter { it.level == 'E' || it.level == 'W' || it.level == 'F' }
-        )
+    var logEntries by remember {
+        mutableStateOf(LogCatcher.getLogs())
+    }
+    var crashReportText by remember {
+        mutableStateOf(LogCatcher.readLastCrashReport())
+    }
+    var activeComponents by remember {
+        mutableStateOf(LogCatcher.getActiveComponents())
     }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -103,8 +121,16 @@ fun LogKeeperScreen(onBack: () -> Unit) {
                     writer.write("=== LOG KEEPER AUDIT EXPORT ===\n")
                     writer.write("Export Timestamp: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Calendar.getInstance().time)}\n")
                     writer.write("Privacy Filter: NO content, NO credentials, NO PII\n\n")
-                    logLines.forEach { line ->
-                        writer.write("$line\n")
+
+                    if (!crashReportText.isNullOrBlank()) {
+                        writer.write("--- PERSISTED CRASH REPORT ---\n")
+                        writer.write(crashReportText)
+                        writer.write("\n\n")
+                    }
+
+                    writer.write("--- LOG ENTRIES (${logEntries.size}) ---\n")
+                    logEntries.forEach { entry ->
+                        writer.write("${entry.toExportString()}\n")
                     }
                 }
             }
@@ -114,7 +140,20 @@ fun LogKeeperScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.log_keeper)) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(R.drawable.sym_keyboard_log_keeper_rounded),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = stringResource(R.string.log_keeper),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -130,12 +169,12 @@ fun LogKeeperScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp)
         ) {
+            // Master Switch Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -144,7 +183,7 @@ fun LogKeeperScreen(onBack: () -> Unit) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -152,10 +191,10 @@ fun LogKeeperScreen(onBack: () -> Unit) {
                         Text(
                             text = "Master Logging Switch",
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
+                            fontSize = 15.sp
                         )
                         Text(
-                            text = if (isEnabled) "Active: Recording internal errors & stack traces" else "Disabled: No logs are being retained",
+                            text = if (isEnabled) "Active: Capturing errors & crash stack traces" else "Disabled: Zero logging overhead",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -165,96 +204,371 @@ fun LogKeeperScreen(onBack: () -> Unit) {
                         onCheckedChange = { checked ->
                             isEnabled = checked
                             prefs.edit().putBoolean("pref_log_keeper_enabled", checked).apply()
+                            LogCatcher.setEnabled(checked)
                         }
                     )
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Tabs: [Log Keeper] and [All Running]
+            TabRow(
+                selectedTabIndex = selectedTabIndex,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
+                Tab(
+                    selected = selectedTabIndex == 0,
+                    onClick = { selectedTabIndex = 0 },
+                    text = {
+                        Text(
+                            text = "Log Keeper",
+                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
+                Tab(
+                    selected = selectedTabIndex == 1,
                     onClick = {
-                        val date = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Calendar.getInstance().time)
-                        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-                            .addCategory(Intent.CATEGORY_OPENABLE)
-                            .putExtra(Intent.EXTRA_TITLE, "log_keeper_$date.txt")
-                            .setType("text/plain")
-                        exportLauncher.launch(intent)
+                        selectedTabIndex = 1
+                        activeComponents = LogCatcher.getActiveComponents()
                     },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("📥 Download Logs")
-                }
-
-                OutlinedButton(
-                    onClick = {
-                        logLines = Log.getLog().filter { it.level == 'E' || it.level == 'W' || it.level == 'F' }
-                    },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("🔄 Refresh")
-                }
+                    text = {
+                        Text(
+                            text = "All Running",
+                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
             }
 
-            Text(
-                text = "Recorded Errors & Diagnostics (${logLines.size})",
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
-            )
+            // Tab Content
+            if (selectedTabIndex == 0) {
+                LogKeeperTabContent(
+                    logEntries = logEntries,
+                    crashReport = crashReportText,
+                    onRefresh = {
+                        logEntries = LogCatcher.getLogs()
+                        crashReportText = LogCatcher.readLastCrashReport()
+                    },
+                    onExport = {
+                        val success = LogCatcher.exportLogsToDownloads(context)
+                        if (success) {
+                            Toast.makeText(context, "Saved to Downloads folder", Toast.LENGTH_LONG).show()
+                        } else {
+                            // Fallback to system file picker
+                            val date = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Calendar.getInstance().time)
+                            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+                                .addCategory(Intent.CATEGORY_OPENABLE)
+                                .putExtra(Intent.EXTRA_TITLE, "log_keeper_$date.txt")
+                                .setType("text/plain")
+                            exportLauncher.launch(intent)
+                        }
+                    },
+                    onCopy = {
+                        val fullLog = buildString {
+                            if (!crashReportText.isNullOrBlank()) {
+                                appendLine("=== PERSISTED CRASH REPORT ===")
+                                appendLine(crashReportText)
+                                appendLine()
+                            }
+                            appendLine("=== RECENT SYSTEM LOGS (${logEntries.size}) ===")
+                            logEntries.forEach { appendLine(it.toExportString()) }
+                        }
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("LogKeeper", fullLog))
+                        Toast.makeText(context, "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
+                    },
+                    onClear = {
+                        LogCatcher.clearLogs()
+                        LogCatcher.clearCrashReport()
+                        logEntries = emptyList()
+                        crashReportText = null
+                    }
+                )
+            } else {
+                AllRunningTabContent(
+                    components = activeComponents,
+                    onRefresh = {
+                        activeComponents = LogCatcher.getActiveComponents()
+                    }
+                )
+            }
+        }
+    }
+}
 
-            if (logLines.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
+@Composable
+fun LogKeeperTabContent(
+    logEntries: List<LogCatcher.LogEntry>,
+    crashReport: String?,
+    onRefresh: () -> Unit,
+    onExport: () -> Unit,
+    onCopy: () -> Unit,
+    onClear: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        // Action Bar with Copy, Export, Refresh, and Clear
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = onCopy,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.sym_keyboard_copy),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Copy", fontSize = 12.sp)
+            }
+
+            Button(
+                onClick = onExport,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_file_download),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Export", fontSize = 12.sp)
+            }
+
+            OutlinedButton(
+                onClick = onRefresh,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Refresh", fontSize = 12.sp)
+            }
+
+            OutlinedButton(
+                onClick = onClear,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Clear", fontSize = 12.sp)
+            }
+        }
+
+        // Crash Report Banner if present
+        if (!crashReport.isNullOrBlank()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = "✨ No error logs found\nSystem is operating cleanly.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        text = "🚨 Persistent Crash Report Intercepted",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = crashReport,
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        maxLines = 10
                     )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    items(logLines.reversed()) { line ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface
+            }
+        }
+
+        Text(
+            text = "Captured System & Error Logs (${logEntries.size})",
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+        )
+
+        if (logEntries.isEmpty() && crashReport.isNullOrBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "✨ No logs recorded\nSystem is running cleanly.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                items(logEntries.reversed()) { entry ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp),
+                        shape = RoundedCornerShape(6.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "[${entry.level}] ${entry.tag}",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = when (entry.level) {
+                                        'E', 'F' -> MaterialTheme.colorScheme.error
+                                        'W' -> Color(0xFFE65100)
+                                        else -> MaterialTheme.colorScheme.primary
+                                    }
+                                )
+                                Text(
+                                    text = entry.formattedTime(),
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = entry.message,
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "[${line.level}] ${line.tag ?: "General"}",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = if (line.level == 'E' || line.level == 'F') MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                                    )
-                                }
+                            if (entry.stackTrace != null) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = line.message,
-                                    fontSize = 11.sp,
+                                    text = entry.stackTrace,
+                                    fontSize = 10.sp,
                                     fontFamily = FontFamily.Monospace,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AllRunningTabContent(
+    components: List<LogCatcher.ComponentInfo>,
+    onRefresh: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Active Subsystems & Services (${components.size})",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
+            OutlinedButton(onClick = onRefresh) {
+                Text("Refresh", fontSize = 12.sp)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (components.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No running components registered yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                items(components) { comp ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(Color(0xFF4CAF50), CircleShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = comp.name,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Category: ${comp.category}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Card(
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                )
+                            ) {
+                                Text(
+                                    text = comp.status,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }

@@ -145,7 +145,16 @@ public final class BinaryDictionary extends Dictionary {
             valueArray[index] = attributeMap.get(key);
             index++;
         }
-        mNativeDict = createOnMemoryNative(formatVersion, locale.toString(), keyArray, valueArray);
+        if (JniUtils.isNativeLoaded()) {
+            try {
+                mNativeDict = createOnMemoryNative(formatVersion, locale.toString(), keyArray, valueArray);
+            } catch (Throwable t) {
+                Log.e(TAG, "Failed to create on-memory dictionary via native", t);
+                mNativeDict = 0;
+            }
+        } else {
+            mNativeDict = 0;
+        }
     }
 
 
@@ -208,7 +217,16 @@ public final class BinaryDictionary extends Dictionary {
     private void loadDictionary(final String path, final long startOffset,
             final long length, final boolean isUpdatable) {
         mHasUpdated = false;
-        mNativeDict = openNative(path, startOffset, length, isUpdatable);
+        if (JniUtils.isNativeLoaded()) {
+            try {
+                mNativeDict = openNative(path, startOffset, length, isUpdatable);
+            } catch (Throwable t) {
+                Log.e(TAG, "Failed to open native dictionary: " + path, t);
+                mNativeDict = 0;
+            }
+        } else {
+            mNativeDict = 0;
+        }
     }
 
     // TODO: Check isCorrupted() for main dictionaries.

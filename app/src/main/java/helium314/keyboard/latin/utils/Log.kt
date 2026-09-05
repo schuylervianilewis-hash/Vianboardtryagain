@@ -5,9 +5,7 @@ import java.time.LocalDateTime
 import java.util.Date
 
 /**
- * Logger that does the android logging, but also allows reading the log in the app.
- * It's only a little slower than the android logger, but since both are used we end up at
- * half performance (still fast enough to not be noticeable, unless spamming thousands of log lines)
+ * Logger that bridges Android system logging and the lightweight LogCatcher ring buffer.
  */
 object Log {
     @JvmStatic
@@ -18,7 +16,7 @@ object Log {
 
     @JvmStatic
     fun e(tag: String?, message: String, e: Throwable?) {
-        log(LogLine('E', tag, "$message\n${e?.stackTraceToString()}"))
+        log(LogLine('E', tag, "$message\n${e?.stackTraceToString()}", e))
         android.util.Log.e(tag, message, e)
     }
 
@@ -30,7 +28,7 @@ object Log {
 
     @JvmStatic
     fun w(tag: String?, message: String, e: Throwable?) {
-        log(LogLine('W', tag, "$message\n${e?.stackTraceToString()}"))
+        log(LogLine('W', tag, "$message\n${e?.stackTraceToString()}", e))
         android.util.Log.w(tag, message, e)
     }
 
@@ -42,7 +40,7 @@ object Log {
 
     @JvmStatic
     fun i(tag: String?, message: String, e: Throwable?) {
-        log(LogLine('I', tag, "$message\n${e?.stackTraceToString()}"))
+        log(LogLine('I', tag, "$message\n${e?.stackTraceToString()}", e))
         android.util.Log.i(tag, message, e)
     }
 
@@ -54,7 +52,7 @@ object Log {
 
     @JvmStatic
     fun d(tag: String?, message: String, e: Throwable?) {
-        log(LogLine('D', tag, "$message\n${e?.stackTraceToString()}"))
+        log(LogLine('D', tag, "$message\n${e?.stackTraceToString()}", e))
         android.util.Log.d(tag, message, e)
     }
 
@@ -71,28 +69,31 @@ object Log {
     }
 
     private fun log(line: LogLine) {
-        synchronized(logLines) {
-            if (logLines.size > 12000) // clear oldest entries if list gets too long
-                logLines.subList(0, 2000).clear()
-            logLines.add(line)
-        }
+        // Forward directly to LogCatcher engine
+        LogCatcher.log(line.level, line.tag, line.message, line.throwable)
     }
 
-    private val logLines: MutableList<LogLine> = ArrayList(2000)
-
-    /** returns a copy of [logLines] */
-    fun getLog(maxLines: Int = logLines.size) = synchronized(logLines) { logLines.takeLast(maxLines) }
+    /** returns recent logs as LogLine */
+    fun getLog(maxLines: Int = 1000): List<LogLine> {
+        return LogCatcher.getLogs(maxLines).map {
+            LogLine(it.level, it.tag, it.message, null, it.timestamp)
+        }
+    }
 }
 
-data class LogLine(val level: Char, val tag: String?, val message: String) {
-
-    // time can be Date or LocalDateTime, doesn't matter because but it's used for toString only
+data class LogLine(
+    val level: Char,
+    val tag: String?,
+    val message: String,
+    val throwable: Throwable? = null,
+    val timestampMs: Long = System.currentTimeMillis()
+) {
     private val time = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         LocalDateTime.now()
     } else {
-        Date(System.currentTimeMillis())
+        Date(timestampMs)
     }
 
-    override fun toString(): String = // should look like a normal android log line, at least for api26+
+    override fun toString(): String =
         "${time.toString().replace('T', ' ')} $level $tag: $message"
 }

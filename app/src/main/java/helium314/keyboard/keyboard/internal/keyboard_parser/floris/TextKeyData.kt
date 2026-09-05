@@ -120,6 +120,10 @@ sealed interface KeyData : AbstractKeyData {
             if (shouldShowTldPopups(params)) {
                 keys.add(",")
             }
+            if (keys.isNotEmpty()) {
+                val cols = ((keys.size + 1) / 2).coerceIn(3, 5)
+                keys.add(0, "${Key.POPUP_KEYS_AUTO_COLUMN_ORDER}$cols")
+            }
             return keys
         }
 

@@ -26,6 +26,22 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **Phase 9: CI Pipeline & JVM Metaspace Optimization**: Configured automated debug keystore generation in GitHub Actions workflow to prevent CI packaging failures, and configured `-XX:MaxMetaspaceSize=1024m` in `gradle.properties` to prevent daemon heap exhaustion.
 - **Phase 10: Repository & Resource Pruning**: Removed 98 redundant non-English/French localized string resource folders (`values-*`), updated `locales_config.xml`, added `resourceConfigurations += listOf("en", "fr")` and `ndk.abiFilters` (`arm64-v8a`, `x86_64`) in `app/build.gradle.kts`, added `.build-outputs/` to `.gitignore`, reducing res folder by 75% and source repo to <10MB.
 - **Phase 11: Modern Layout, Icons & Theme Realignment**: Restored official `KeyLabel.kt` icon mapping for functional keys, resolved extension function imports in `TextKeyData.kt` and `PopupKeysUtils.kt`, aligned defaults to modern Rounded M3 style with key borders and number row, and verified popup view offsets.
+- **Phase 12: Dual-Engine Log Keeper & Comma Popup Grid Realignment**:
+  - Split logging into background persistent catcher (`LogCatcher.kt`) and Material 3 UI (`LogKeeperActivity.kt`).
+  - Implemented disk-persisted crash interceptor (`last_crash.log`), thread-safe ring buffer, component lifecycle tracking ("All Running" tab), and 4-action bar (`Copy`, `Export`, `Refresh`, `Clear`).
+  - Switched Log Keeper icon from generic settings cog to logbook vector icon (`sym_keyboard_log_keeper_rounded` / `ic_settings_about_log`).
+  - Realigned comma popup keys layout with auto-column grid order (`!autoColumnOrder!`) to match the neat multi-row grid of the period key popup.
+- **Phase 13: Repo Pruning & Curated Color Palettes**:
+  - Excised Custom Background Image Engine (`BackgroundImagePreference.kt`, `Settings.readUserBackgroundImage`, bitmap cache).
+  - Excised Custom User Font & Emoji Font Loader (`CustomFontPreference.kt`, `KeyboardTypeface` file loaders).
+  - Excised Dynamic External Gesture Binary Loader (`LoadGestureLibPreference.kt`).
+  - Excised Holo Legacy Theme & Drawables (`STYLE_HOLO`, `THEME_HOLO_WHITE`, `keyboardIconsHolo` map).
+  - Replaced granular 20-slider hex picker with curated, pre-tested, high-contrast color palettes (Material You Dynamic, AMOLED Pure Black, Slate Dark, Clean White, Forest Green, Deep Indigo) with visual key swatches and one-tap selection.
+- **Phase 14: Log Keeper Auto-Rotation & Native JNI Guard**:
+  - Persistent active disk log (`vianboard_active.log`) with 2 MB threshold auto-rotation into device `Download/` folder.
+  - Direct crash dump copy to device `Download/` folder (`VianBoard_CRASH_<timestamp>.log`) alongside internal storage cache.
+  - Added direct Settings screen entry for Log Keeper under About screen (`SettingsWithoutKey.LOG_KEEPER`).
+  - Hardened JNI native initialization guards (`JniUtils.isNativeLoaded()`) across `ExpandableBinaryDictionary` and `BinaryDictionary` to prevent hard SIGSEGV crashes if native binaries are unloaded or missing.
 
 ## 4. Change Ledger
 - **2026-08-27**: Cloned and imported complete source tree from `schuylervianilewis-hash/Vianboardtryagain`.
@@ -37,4 +53,7 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **2026-09-02**: Added Ensure Debug Keystore step to `.github/workflows/build-apk.yml` and tuned `gradle.properties` JVM args with `-XX:MaxMetaspaceSize=1024m`.
 - **2026-09-03**: Pruned 98 redundant `values-*` directories, configured `resourceConfigurations` and `ndk.abiFilters` in `app/build.gradle.kts`, aligned `locales_config.xml`, and added `.build-outputs/` to `.gitignore`.
 - **2026-09-03**: Restored functional key icon mappings in `KeyLabel.kt`, updated `TextKeyData.kt` and `PopupKeysUtils.kt`, and set default theme style to modern Rounded with key borders and dedicated number row in `Defaults.kt`.
+- **2026-09-03**: Implemented `LogCatcher` persistent engine + crash interceptor, redesigned `LogKeeperActivity` with `Log Keeper` and `All Running` tabs, updated icon to clean logbook vector, and realigned comma popup with `!autoColumnOrder!` grid formatting.
+- **2026-09-04**: Removed Custom Background Image Engine, Custom Font Loaders, External Gesture Binary Loader, and Holo Legacy Theme; replaced granular 20-slider hex picker with 6 curated high-contrast pre-tested color palettes; verified clean compilation.
+- **2026-09-05**: Added Log Keeper 2MB disk auto-rotation and fatal crash dumping directly to device `Download/` folder via MediaStore, guarded `ExpandableBinaryDictionary` and `BinaryDictionary` against uninitialized native JNI calls, and added Log Keeper entry to About screen settings.
 

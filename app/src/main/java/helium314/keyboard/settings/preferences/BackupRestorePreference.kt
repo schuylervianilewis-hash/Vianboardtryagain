@@ -345,8 +345,5 @@ private val backupFilePatterns by lazy { listOf(
     "layouts${File.separator}.*${LayoutUtilsCustom.CUSTOM_LAYOUT_PREFIX}+\\..{0,4}".toRegex(), // can't expect a period at the end, as this would break restoring older backups
     "dicts${File.separator}.*${File.separator}.*user\\.dict".toRegex(),
     "UserHistoryDictionary.*${File.separator}UserHistoryDictionary.*\\.(body|header)".toRegex(),
-    "custom_background_image.*".toRegex(),
-    "custom_font".toRegex(),
-    "custom_emoji_font".toRegex(),
     "clipboard/.*".toRegex(),
 ) }

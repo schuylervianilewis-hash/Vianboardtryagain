@@ -37,6 +37,7 @@ import helium314.keyboard.settings.Setting
 import helium314.keyboard.settings.preferences.Preference
 import helium314.keyboard.settings.SearchSettingsScreen
 import helium314.keyboard.settings.SettingsActivity
+import helium314.keyboard.settings.LogKeeperActivity
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.previewDark
 import kotlinx.coroutines.Dispatchers
@@ -58,6 +59,7 @@ fun AboutScreen(
         SettingsWithoutKey.GITHUB_WIKI,
         SettingsWithoutKey.COMMUNITY_LINKS,
         SettingsWithoutKey.GITHUB,
+        SettingsWithoutKey.LOG_KEEPER,
         SettingsWithoutKey.SAVE_LOG,
     )
     SearchSettingsScreen(
@@ -172,6 +174,18 @@ fun createAboutSettings(context: Context) = listOf(
                 ctx.startActivity(intent)
             },
             icon = R.drawable.ic_settings_about_github
+        )
+    },
+    Setting(context, SettingsWithoutKey.LOG_KEEPER, R.string.log_keeper) { setting ->
+        val ctx = LocalContext.current
+        Preference(
+            name = setting.title,
+            description = "Inspect running components, system logs, crash dumps, and diagnostics",
+            onClick = {
+                val intent = Intent(ctx, LogKeeperActivity::class.java)
+                ctx.startActivity(intent)
+            },
+            icon = R.drawable.ic_settings_about_log
         )
     },
     Setting(context, SettingsWithoutKey.SAVE_LOG, R.string.save_log) { setting ->

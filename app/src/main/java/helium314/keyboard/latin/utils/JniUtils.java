@@ -40,6 +40,7 @@ public final class JniUtils {
     }
 
     public static boolean sHaveGestureLib = false;
+    public static boolean sNativeLibraryLoaded = false;
     static {
         // hardcoded default path, may not work on all phones
         @SuppressLint("SdCardPath") String filesDir = "/data/data/" + BuildConfig.APPLICATION_ID + "/files";
@@ -77,6 +78,7 @@ public final class JniUtils {
                     // try loading the library
                     System.load(userSuppliedLibrary.getAbsolutePath());
                     sHaveGestureLib = true; // this is an assumption, any way to actually check?
+                    sNativeLibraryLoaded = true;
                 } else {
                     // delete if checksum doesn't match
                     // this is bad if we can't get the application and the user has a different library than expected...
@@ -96,14 +98,16 @@ public final class JniUtils {
             try {
                 System.loadLibrary(JNI_LIB_NAME_GOOGLE);
                 sHaveGestureLib = true;
+                sNativeLibraryLoaded = true;
             } catch (UnsatisfiedLinkError ul) {
                 Log.w(TAG, "Could not load system glide typing library " + JNI_LIB_NAME_GOOGLE + ": " + ul.getMessage());
             }
         }
-        if (!sHaveGestureLib) {
+        if (!sNativeLibraryLoaded) {
             // try loading built-in library
             try {
                 System.loadLibrary(JNI_LIB_NAME);
+                sNativeLibraryLoaded = true;
             } catch (UnsatisfiedLinkError ul) {
                 Log.w(TAG, "Could not load native library " + JNI_LIB_NAME, ul);
             }
@@ -112,6 +116,10 @@ public final class JniUtils {
 
     private JniUtils() {
         // This utility class is not publicly instantiable.
+    }
+
+    public static boolean isNativeLoaded() {
+        return sNativeLibraryLoaded;
     }
 
     public static void loadNativeLibrary() {

@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
+        helium314.keyboard.latin.utils.LogCatcher.init(this)
         DebugFlags.init(this)
         FoldableUtils.init(this)
         Settings.init(this)

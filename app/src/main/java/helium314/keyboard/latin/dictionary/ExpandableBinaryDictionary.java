@@ -27,6 +27,7 @@ import helium314.keyboard.latin.settings.SettingsValuesForSuggestion;
 import helium314.keyboard.latin.utils.AsyncResultHolder;
 import helium314.keyboard.latin.utils.CombinedFormatUtils;
 import helium314.keyboard.latin.utils.ExecutorUtils;
+import helium314.keyboard.latin.utils.JniUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -159,6 +160,8 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
             lock.lock();
             try {
                 task.run();
+            } catch (Throwable t) {
+                Log.e(TAG, "Exception during background dictionary task", t);
             } finally {
                 lock.unlock();
             }
@@ -218,15 +221,29 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
     }
 
     private void openBinaryDictionaryLocked() {
-        mBinaryDictionary = new BinaryDictionary(
-                mDictFile.getAbsolutePath(), 0 /* offset */, mDictFile.length(),
-                true /* useFullEditDistance */, mLocale, mDictType, true /* isUpdatable */);
+        if (!JniUtils.isNativeLoaded()) {
+            return;
+        }
+        try {
+            mBinaryDictionary = new BinaryDictionary(
+                    mDictFile.getAbsolutePath(), 0 /* offset */, mDictFile.length(),
+                    true /* useFullEditDistance */, mLocale, mDictType, true /* isUpdatable */);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to open binary dictionary: " + mDictName, t);
+        }
     }
 
     void createOnMemoryBinaryDictionaryLocked() {
-        mBinaryDictionary = new BinaryDictionary(
-                mDictFile.getAbsolutePath(), true /* useFullEditDistance */, mLocale, mDictType,
-                DICTIONARY_FORMAT_VERSION, getHeaderAttributeMap());
+        if (!JniUtils.isNativeLoaded()) {
+            return;
+        }
+        try {
+            mBinaryDictionary = new BinaryDictionary(
+                    mDictFile.getAbsolutePath(), true /* useFullEditDistance */, mLocale, mDictType,
+                    DICTIONARY_FORMAT_VERSION, getHeaderAttributeMap());
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to create on-memory binary dictionary: " + mDictName, t);
+        }
     }
 
     public void clear() {

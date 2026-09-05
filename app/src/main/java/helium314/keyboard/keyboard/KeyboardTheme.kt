@@ -66,23 +66,14 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
         const val THEME_SAND = "sand"
         const val THEME_VIOLETTE = "violette"
         fun getAvailableDefaultColors(prefs: SharedPreferences, isNight: Boolean) = listOfNotNull(
-            if (!isNight) THEME_LIGHT else null, THEME_DARK,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) THEME_DYNAMIC else null,
-            if (prefs.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE) == STYLE_HOLO) THEME_HOLO_WHITE else null,
-            THEME_DARKER,
             THEME_BLACK,
-            if (!isNight) THEME_BLUE_GRAY else null,
-            if (!isNight) THEME_BROWN else null,
-            THEME_CHOCOLATE,
-            THEME_CLOUDY,
+            THEME_DARKER,
+            THEME_LIGHT,
             THEME_FOREST,
-            if (!isNight) THEME_INDIGO else null,
-            if (!isNight) THEME_PINK else null,
-            THEME_OCEAN,
-            if (!isNight) THEME_SAND else null,
-            THEME_VIOLETTE
+            THEME_INDIGO
         )
-        val STYLES = arrayOf(STYLE_MATERIAL, STYLE_HOLO, STYLE_ROUNDED)
+        val STYLES = arrayOf(STYLE_MATERIAL, STYLE_ROUNDED)
 
         // These should be aligned with Keyboard.themeId and Keyboard.Case.keyboardTheme
         // attributes' values in attrs.xml.
@@ -146,7 +137,7 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
 
         private fun getThemeColors(themeName: String, themeStyle: String, context: Context, prefs: SharedPreferences, isNight: Boolean): Colors {
             val hasBorders = prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS)
-            val backgroundImage = Settings.readUserBackgroundImage(context, isNight)
+            val backgroundImage: Drawable? = null
             return when (themeName) {
                 THEME_DYNAMIC -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) DynamicColors(context, themeStyle, hasBorders, backgroundImage)
@@ -176,20 +167,7 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
                     ContextCompat.getColor(context, R.color.key_hint_letter_color_lxx_dark),
                     keyboardBackground = backgroundImage
                 )
-                THEME_HOLO_WHITE -> DefaultColors(
-                    themeStyle,
-                    hasBorders,
-                    Color.WHITE,
-                    "#282828".toColorInt(),
-                    Color.WHITE, // drawable is transparent
-                    "#444444".toColorInt(), // should be 222222, but the key drawable is already grey
-                    Color.WHITE,
-                    Color.WHITE,
-                    "#282828".toColorInt(),
-                    Color.WHITE,
-                    "#80FFFFFF".toColorInt(),
-                    keyboardBackground = backgroundImage
-                )
+                THEME_HOLO_WHITE -> getThemeColors(THEME_LIGHT, themeStyle, context, prefs, isNight)
                 THEME_DARKER -> DefaultColors(
                     themeStyle,
                     hasBorders,
