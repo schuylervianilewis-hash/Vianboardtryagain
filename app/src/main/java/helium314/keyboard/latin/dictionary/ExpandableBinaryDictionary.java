@@ -114,7 +114,7 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
     }
 
     public boolean isValidDictionaryLocked() {
-        return mBinaryDictionary.isValidDictionary();
+        return mBinaryDictionary != null && mBinaryDictionary.isValidDictionary();
     }
 
     /**
@@ -177,7 +177,7 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
     public int getFrequency(final String word) {
         if (mLock.readLock().tryLock()) {
             try {
-                return mBinaryDictionary.getFrequency(word);
+                return mBinaryDictionary != null ? mBinaryDictionary.getFrequency(word) : NOT_A_PROBABILITY;
             } finally {
                 mLock.readLock().unlock();
             }
@@ -266,7 +266,7 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
     }
 
     protected void runGCIfRequiredLocked(final boolean mindsBlockByGC) {
-        if (mBinaryDictionary.needsToRunGC(mindsBlockByGC)) {
+        if (mBinaryDictionary != null && mBinaryDictionary.needsToRunGC(mindsBlockByGC)) {
             mBinaryDictionary.flushWithGC();
         }
     }
@@ -295,6 +295,7 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
     protected void addUnigramLocked(final String word, final int frequency,
             final String shortcutTarget, final int shortcutFreq, final boolean isNotAWord,
             final boolean isPossiblyOffensive, final int timestamp) {
+        if (mBinaryDictionary == null) return;
         if (!mBinaryDictionary.addUnigramEntry(word, frequency, shortcutTarget, shortcutFreq,
                 false /* isBeginningOfSentence */, isNotAWord, isPossiblyOffensive, timestamp)) {
             Log.e(TAG, "Cannot add unigram entry. word: " + word);
@@ -337,6 +338,7 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
 
     protected void addNgramEntryLocked(@NonNull final NgramContext ngramContext, final String word,
             final int frequency, final int timestamp) {
+        if (mBinaryDictionary == null) return;
         if (!mBinaryDictionary.addNgramEntry(ngramContext, word, frequency, timestamp)) {
             if (DEBUG) {
                 Log.i(TAG, "Cannot add n-gram entry.");
@@ -473,7 +475,7 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
         if (oldBinaryDictionary != null) {
             oldBinaryDictionary.close();
         }
-        if (mBinaryDictionary.isValidDictionary()
+        if (mBinaryDictionary != null && mBinaryDictionary.isValidDictionary()
                 && needsToMigrateDictionary(mBinaryDictionary.getFormatVersion())) {
             if (!mBinaryDictionary.migrateTo(DICTIONARY_FORMAT_VERSION)) {
                 Log.e(TAG, "Dictionary migration failed: " + mDictName);
@@ -490,7 +492,9 @@ abstract public class ExpandableBinaryDictionary extends Dictionary {
         createOnMemoryBinaryDictionaryLocked();
         loadInitialContentsLocked();
         // Run GC and flush to file when initial contents have been loaded.
-        mBinaryDictionary.flushWithGCIfHasUpdated();
+        if (mBinaryDictionary != null) {
+            mBinaryDictionary.flushWithGCIfHasUpdated();
+        }
     }
 
     /**

@@ -226,7 +226,24 @@
   5. Calibrated popup elevation in `MainKeyboardView.java` by +16% key height offset to provide a clean floating gap above the parent key on long press.
 - **How it was verified**: Full local build verified with `compile_applet` (exit code 0, `BUILD SUCCESSFUL`).
 - **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Ready for on-device manual QA.## Entry 013
+- **Timestamp**: 2026-09-06T09:32:00-07:00
+- **Requested**: Unisoc compatibility fix for suggestions and crashes, plus Log Keeper UI redesign with 2 tabs: All Logs & Errors matching user screenshot.
+- **Exact files touched**:
+  - `app/build.gradle.kts`
+  - `.github/workflows/build-apk.yml`
+  - `app/src/main/java/helium314/keyboard/latin/dictionary/ExpandableBinaryDictionary.java`
+  - `app/src/main/java/helium314/keyboard/latin/dictionary/DictionaryFactory.kt`
+  - `app/src/main/java/helium314/keyboard/settings/LogKeeperActivity.kt`
+  - `receipts/RECEIPTS_001.md`
+  - `BLUEPRINT.md`
+- **What was actually done**:
+  1. Re-enabled `armeabi-v7a` in `app/build.gradle.kts` `abiFilters` alongside `arm64-v8a` and `x86_64` to support 32-bit userlands on Unisoc devices.
+  2. Updated `.github/workflows/build-apk.yml` to automatically build `libjni_latinime.so` for `armeabi-v7a`, `arm64-v8a`, and `x86_64` using `ndk-build` before assembling the APK.
+  3. Hardened `ExpandableBinaryDictionary.java` with null checks across `isValidDictionaryLocked()`, `getFrequency()`, `runGCIfRequiredLocked()`, `addUnigramLocked()`, `addNgramEntryLocked()`, `loadBinaryDictionaryLocked()`, and `createNewDictionaryLocked()` to permanently prevent NPE crashes even if native dictionary initialization is delayed or unavailable.
+  4. Updated `DictionaryFactory.kt` to prevent `killDictionary(file)` from deleting valid dictionary cache files when the native library is not yet loaded.
+  5. Redesigned `LogKeeperActivity.kt` to match the user's reference screenshot: top bar with back navigation, bold title, Master Switch, Copy icon button, and Download/Export icon button; 2 tabs: **All Logs** and **Errors**; clean card list with monospace timestamps, component tag badges, colored log level chips, and message text.
+- **How it was verified**: Full local build verified with `compile_applet` (exit code 0, `BUILD SUCCESSFUL`).
+- **Deviation from requested**: None.
 - **Known issue or follow-up needed**: Ready for on-device manual QA.
-
-
 

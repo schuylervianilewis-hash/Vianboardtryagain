@@ -48,6 +48,13 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
   - **Calibrated Popup Elevation**: Elevated long-press popup panels in `MainKeyboardView.java` by +16% key height offset to provide a clear, floating preview gap above the parent button.
   - **Physical Keyboard & Gesture Sidelining**: Excised physical keyboard emoji toggles from `AdvancedScreen.kt` and safely hardcoded gesture input to false to prevent runtime crashes.
 
+- **Phase 16: Unisoc Native ABI Compatibility & Log Keeper 2-Tab Redesign**:
+  - **Unisoc 32-bit ABI Support**: Restored `armeabi-v7a` to `app/build.gradle.kts` `abiFilters` alongside `arm64-v8a` and `x86_64`, enabling native binary execution on Unisoc devices running 32-bit userlands.
+  - **CI Native Compilation**: Configured `.github/workflows/build-apk.yml` with automated `ndk-build` compilation step targeting `armeabi-v7a`, `arm64-v8a`, and `x86_64` prior to packaging the APK.
+  - **Defensive Null Guards**: Hardened `ExpandableBinaryDictionary.java` against null `mBinaryDictionary` references across `isValidDictionaryLocked()`, `getFrequency()`, `runGCIfRequiredLocked()`, `addUnigramLocked()`, `addNgramEntryLocked()`, `loadBinaryDictionaryLocked()`, and `createNewDictionaryLocked()`, completely preventing NPE crashes during cursor updates, history tracking, and typing sessions.
+  - **Non-Destructive Dictionary Loading**: Updated `DictionaryFactory.kt` to prevent `killDictionary(file)` from deleting valid dictionary cache files when the native library is not yet loaded.
+  - **Log Keeper 2-Tab UI**: Redesigned `LogKeeperActivity.kt` to match the user's reference screenshot: top action bar with back navigation, bold title, Master Switch, Copy icon button, and Download/Export icon button; 2 tabs: **All Logs** and **Errors**; clean card layout with monospace timestamps, component tag badges, colored log level chips, and message text.
+
 ## 4. Change Ledger
 - **2026-08-27**: Cloned and imported complete source tree from `schuylervianilewis-hash/Vianboardtryagain`.
 - **2026-08-27**: Configured Gradle 9.3.1 / AGP 9.1.1 toolchain, updated `metadata.json`, `settings.gradle.kts`, `gradle/libs.versions.toml`, and `app/build.gradle.kts`.
@@ -62,4 +69,5 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **2026-09-04**: Removed Custom Background Image Engine, Custom Font Loaders, External Gesture Binary Loader, and Holo Legacy Theme; replaced granular 20-slider hex picker with 6 curated high-contrast pre-tested color palettes; verified clean compilation.
 - **2026-09-05**: Added Log Keeper 2MB disk auto-rotation and fatal crash dumping directly to device `Download/` folder via MediaStore, guarded `ExpandableBinaryDictionary` and `BinaryDictionary` against uninitialized native JNI calls, and added Log Keeper entry to About screen settings.
 - **2026-09-05**: Implemented Safe Sidelining (non-EN/FR layouts & assets moved to `/sidelined_features/`), locked settings presets (Blue Grey theme, rounded key borders, no tap popup preview, number row with hints, 10m clipboard history, redundant popups removed), calibrated floating popup elevation in `MainKeyboardView.java`, and stripped physical keyboard settings from `AdvancedScreen.kt`.
+- **2026-09-06**: Restored `armeabi-v7a` ABI support for Unisoc hardware, added CI native library compilation in GitHub Actions workflow, guarded `ExpandableBinaryDictionary` against null dictionary pointer crashes, protected dictionary cache from deletion in `DictionaryFactory`, and redesigned Log Keeper UI into a 2-tab view (**All Logs** & **Errors**) matching the reference screenshot.
 

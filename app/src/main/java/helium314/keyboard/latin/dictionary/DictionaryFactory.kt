@@ -102,7 +102,11 @@ object DictionaryFactory {
             return readOnlyBinaryDictionary
         }
         readOnlyBinaryDictionary.close()
-        killDictionary(file)
+        if (helium314.keyboard.latin.utils.JniUtils.isNativeLoaded()) {
+            killDictionary(file)
+        } else {
+            Log.w("DictionaryFactory", "Native library not loaded; keeping dictionary file ${file.name}")
+        }
         return null
     }
 
