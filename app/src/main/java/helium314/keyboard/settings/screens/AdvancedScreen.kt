@@ -4,6 +4,15 @@ package helium314.keyboard.settings.screens
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,47 +61,36 @@ import helium314.keyboard.latin.utils.getActivity
 
 @Composable
 fun AdvancedSettingsScreen(
+    onClickBackupRestore: () -> Unit,
+    onClickAbout: () -> Unit,
     onClickBack: () -> Unit,
 ) {
-    val prefs = LocalContext.current.prefs()
-    val b = (LocalContext.current.getActivity() as? SettingsActivity)?.prefChanged?.collectAsState()
-    if ((b?.value ?: 0) < 0)
-        Log.v("irrelevant", "stupid way to trigger recomposition on preference change")
-    val items = listOf(
-        Settings.PREF_ALWAYS_INCOGNITO_MODE,
-        Settings.PREF_KEY_LONGPRESS_TIMEOUT,
-        Settings.PREF_SPACE_HORIZONTAL_SWIPE,
-        Settings.PREF_SPACE_VERTICAL_SWIPE,
-        if (Settings.readHorizontalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.SWITCH_LANGUAGE
-            || Settings.readVerticalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.SWITCH_LANGUAGE)
-            Settings.PREF_LANGUAGE_SWIPE_DISTANCE else null,
-        if (Settings.readVerticalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.TOUCHPAD_MODE)
-            Settings.PREF_TOUCHPAD_SENSITIVITY else null,
-        if (Settings.readVerticalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.TOUCHPAD_MODE)
-            Settings.PREF_TOUCHPAD_EDGE_SCROLL else null,
-        Settings.PREF_DELETE_SWIPE,
-        Settings.PREF_SPACE_TO_CHANGE_LANG,
-        Settings.PREFS_LONG_PRESS_SYMBOLS_FOR_NUMPAD,
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) Settings.PREF_SHOW_SETUP_WIZARD_ICON else null,
-        Settings.PREF_ABC_AFTER_SYMBOL_SPACE,
-        Settings.PREF_ABC_AFTER_NUMPAD_SPACE,
-        Settings.PREF_ABC_AFTER_EMOJI,
-        Settings.PREF_ABC_AFTER_CLIP,
-        Settings.PREF_CUSTOM_CURRENCY_KEY,
-        Settings.PREF_MORE_POPUP_KEYS,
-        Settings.PREF_TIMESTAMP_FORMAT,
-        SettingsWithoutKey.BACKUP_RESTORE,
-        if (BuildConfig.DEBUG || prefs.getBoolean(DebugSettings.PREF_SHOW_DEBUG_SETTINGS, Defaults.PREF_SHOW_DEBUG_SETTINGS))
-            SettingsWithoutKey.DEBUG_SETTINGS else null,
-        R.string.settings_category_experimental,
-        Settings.PREF_EMOJI_MAX_SDK,
-        Settings.PREF_URL_DETECTION
-    )
     SearchSettingsScreen(
         onClickBack = onClickBack,
         title = stringResource(R.string.settings_screen_advanced),
-        settings = items
-    )
+        settings = emptyList()
+    ) {
+        androidx.compose.material3.Scaffold(contentWindowInsets = androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Bottom)) { innerPadding ->
+            androidx.compose.foundation.layout.Column(
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(innerPadding)
+            ) {
+                Preference(
+                    name = stringResource(R.string.backup_restore_title),
+                    description = "Backup all, restore all, and import HeliBoard backups",
+                    icon = R.drawable.ic_settings_advanced,
+                    onClick = onClickBackupRestore
+                ) { NextScreenIcon() }
+                Preference(
+                    name = stringResource(R.string.settings_screen_about),
+                    description = "Version, licenses, Log Keeper, and credits",
+                    icon = R.drawable.ic_settings_about,
+                    onClick = onClickAbout
+                ) { NextScreenIcon() }
+            }
+        }
+    }
 }
 
 @SuppressLint("ApplySharedPref")
@@ -273,7 +272,7 @@ private fun Preview() {
     SettingsActivity.settingsContainer = SettingsContainer(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            AdvancedSettingsScreen { }
+            AdvancedSettingsScreen({}, {}, {})
         }
     }
 }

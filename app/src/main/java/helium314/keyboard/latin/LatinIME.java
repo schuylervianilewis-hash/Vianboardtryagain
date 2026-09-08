@@ -87,6 +87,7 @@ import helium314.keyboard.latin.utils.StatsUtilsManager;
 import helium314.keyboard.latin.utils.SubtypeLocaleUtils;
 import helium314.keyboard.latin.utils.SubtypeSettings;
 import helium314.keyboard.latin.utils.SubtypeState;
+import helium314.keyboard.latin.utils.TempIncognitoManager;
 import helium314.keyboard.latin.utils.ToolbarMode;
 import helium314.keyboard.settings.SettingsActivity2;
 import kotlin.Unit;
@@ -1017,6 +1018,7 @@ public class LatinIME extends InputMethodService implements
     public void onWindowHidden() {
         super.onWindowHidden();
         Log.i(TAG, "onWindowHidden");
+        TempIncognitoManager.onKeyboardClosed();
         final MainKeyboardView mainKeyboardView = mKeyboardSwitcher.getMainKeyboardView();
         if (mainKeyboardView != null) {
             mainKeyboardView.closing();
@@ -1042,6 +1044,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void cleanupInternalStateForFinishInput() {
+        TempIncognitoManager.onKeyboardClosed();
         // Remove pending messages related to update suggestions
         mHandler.cancelUpdateSuggestionStrip();
         // Should do the following in onFinishInputInternal but until JB MR2 it's not called :(

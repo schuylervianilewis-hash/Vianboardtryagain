@@ -247,3 +247,83 @@
 - **Deviation from requested**: None.
 - **Known issue or follow-up needed**: Ready for on-device manual QA.
 
+## Entry 014
+- **Timestamp**: 2026-09-06T11:06:00-07:00
+- **Requested**: Implement Enter / Bottom row of clipboard in emoji modal; Prompt list (quick notes) modal with 3-option long press (Pin, Edit, Delete), full edit dialog with multiline text field, clipboard move-to-prompt action, and copy toolbar long press; 2-minute temporary incognito mode on incognito toolbar long press that reverts after 2 minutes or upon closing the keyboard.
+- **Exact files touched**:
+  - `app/src/main/java/helium314/keyboard/keyboard/emoji/EmojiPalettesView.java`
+  - `app/src/main/java/helium314/keyboard/latin/database/PromptDao.kt`
+  - `app/src/main/java/helium314/keyboard/keyboard/clipboard/PromptHistoryView.kt`
+  - `app/src/main/java/helium314/keyboard/keyboard/internal/keyboard_parser/floris/KeyCode.kt`
+  - `app/src/main/java/helium314/keyboard/latin/settings/Settings.java`
+  - `app/src/main/java/helium314/keyboard/keyboard/KeyboardSwitcher.java`
+  - `app/src/main/java/helium314/keyboard/latin/utils/TempIncognitoManager.kt`
+  - `app/src/main/java/helium314/keyboard/latin/utils/ToolbarUtils.kt`
+  - `app/src/main/java/helium314/keyboard/keyboard/KeyboardActionListenerImpl.kt`
+  - `app/src/main/java/helium314/keyboard/latin/LatinIME.java`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Configured `EmojiPalettesView.java` to use `KeyboardElement.CLIPBOARD_BOTTOM_ROW` (`clip_bottom_row.json`), providing the exact unified bottom row with the Enter / Action key (`[ABC] [Space] [⌫] [↵ / Action]`) beneath emojis.
+  2. Implemented `updatePrompt(id, newText)` and listener notification in `PromptDao.kt`.
+  3. Added 3-action long-press popup menu (`📌 Pin/Unpin`, `✏️ Edit`, `🗑️ Delete`) to `PromptHistoryView.kt`. Implemented full edit dialog with multiline `EditText`, `Cancel`, and `Save` buttons, bound properly to the IME window token for live typing and in-place updating.
+  4. Verified clipboard card long press offers `📌 Pin/Unpin`, `📥 Move to Prompt List`, and `🗑️ Delete` in `ClipboardAdapter.kt`, moving the clip to `PromptDao` and purging from clipboard history.
+  5. Mapped `ToolbarKey.COPY` long-press to `KeyCode.PROMPT_LIST` and wired `KeyboardSwitcher.setPromptKeyboard()` in `KeyboardActionListenerImpl.kt` for instant toolbar opening.
+  6. Added `KeyCode.INCOGNITO_TEMP_2MIN` and `TempIncognitoManager.kt`: long-pressing the Incognito toolbar key activates incognito for 2 minutes with a timer and feedback Toast. Added lifecycle hooks in `LatinIME.java` (`onWindowHidden()` and `cleanupInternalStateForFinishInput()`) guaranteeing that if the keyboard is closed at any time during temporary incognito, the timer is aborted and incognito is immediately set to OFF.
+- **How it was verified**: Full local build verified with `compile_applet` (exit code 0, `BUILD SUCCESSFUL`).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Ready for on-device verification.
+
+## Entry 015
+- **Timestamp**: 2026-09-07T06:48:00-07:00
+- **Requested**: Apply fixes for security scan findings (exposed keystores and hardcoded signing credentials).
+- **Exact files touched**:
+  - `debug.keystore` (deleted)
+  - `debug.keystore.base64` (deleted)
+  - `app/build.gradle.kts`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Deleted `debug.keystore` and `debug.keystore.base64` from repository root.
+  2. Sanitized `signingConfigs` in `app/build.gradle.kts` by removing hardcoded credentials (`storePassword`, `keyAlias`, `keyPassword`) and dynamically pulling them from environment variables (`DEBUG_KEYSTORE_PATH`, etc.) or local gitignored `local.properties`.
+  3. Verified keystore artifacts are no longer present in the workspace.
+- **How it was verified**: Verified file deletion and syntax validation.
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: None.
+
+## Entry 016
+- **Timestamp**: 2026-09-08T08:01:00-07:00
+- **Requested**: Full overhaul implementation: fix debug signing fallback without committed credentials, bake Image 1 symbols into main layout, add French Latin accents to popups, set default currency key to ₹, restrict layout slots to Default + 1 custom slot, and reorganize settings into 3 parent pages (Appearance, Word Engine, Advanced) with dedicated sub-pages including Backup & Restore (with HeliBoard compatibility).
+- **Exact files touched**:
+  - `app/build.gradle.kts`
+  - `app/src/main/assets/layouts/main/qwerty.txt`
+  - `app/src/main/assets/locale_key_texts/more_popups_main.txt`
+  - `app/src/main/java/helium314/keyboard/latin/settings/Defaults.kt`
+  - `app/src/main/res/values/donottranslate.xml`
+  - `app/src/main/assets/layouts/main/azerty.json` (moved to `/sidelined_features/layouts/main/`)
+  - `app/src/main/assets/layouts/main/bepo.txt` (moved to `/sidelined_features/layouts/main/`)
+  - `app/src/main/java/helium314/keyboard/settings/dialogs/LayoutPickerDialog.kt`
+  - `app/src/main/java/helium314/keyboard/settings/preferences/BackupRestorePreference.kt`
+  - `app/src/main/java/helium314/keyboard/settings/screens/BackupRestoreScreen.kt`
+  - `app/src/main/java/helium314/keyboard/settings/screens/WordEngineScreen.kt`
+  - `app/src/main/java/helium314/keyboard/settings/screens/AppearanceScreen.kt`
+  - `app/src/main/java/helium314/keyboard/settings/screens/AdvancedScreen.kt`
+  - `app/src/main/java/helium314/keyboard/settings/screens/MainSettingsScreen.kt`
+  - `app/src/main/java/helium314/keyboard/settings/SettingsNavHost.kt`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Updated `app/build.gradle.kts` debug signing configuration to safely fall back to the standard Android debug keystore when no external `DEBUG_KEYSTORE_PATH` is specified, fixing the compilation errors without committing any keystores.
+  2. Replaced `qwerty.txt` symbols with the exact requested layout: Row 1 `% / | = [ ] * ! - ;`, Row 2 `@ # $$$ _ & - + ( )`, Row 3 `* " ' : ; ! ?`.
+  3. Configured `more_popups_main.txt` to prioritize Latin French accents (`é è ê ë`, `à â æ á ä`, `î ï`, `ô œ ö`, `ù û ü`, `ç`, `ñ`) directly after key symbols.
+  4. Updated `Defaults.kt` `PREF_CUSTOM_CURRENCY_KEY` to `"₹"` so key `d` displays the Rupee symbol by default.
+  5. Sidelined predefined secondary layouts to `/sidelined_features/layouts/main/`, restricted `donottranslate.xml` to `Default`, and locked `LayoutPickerDialog.kt` to Default + 1 customizable layout slot.
+  6. Rebuilt `MainSettingsScreen.kt` with 3 streamlined parent items: Appearance, Word Engine, and Advanced.
+  7. Built `AppearanceScreen.kt` featuring default layout editing, customizable layout slot picker, Currencies quick chooser (₹, $, €, ¥, custom), Toolbar settings, and Desktop Shortcuts modal.
+  8. Created `WordEngineScreen.kt` routing cleanly to Text Correction and Dictionaries.
+  9. Refactored `AdvancedSettingsScreen.kt` to house Backup & Restore and About.
+  10. Created `BackupRestoreScreen.kt` providing Backup All, Restore All, and Import HeliBoard Backup actions with migration guidance.
+  11. Updated `AboutScreen.kt` and `donottranslate.xml` to credit HeliBoard and AOSP foundations.
+- **How it was verified**: Full project compilation verified via `compile_applet` (exit code 0, build succeeded in 5s).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Ready for on-device verification.

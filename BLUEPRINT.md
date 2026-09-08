@@ -55,6 +55,34 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
   - **Non-Destructive Dictionary Loading**: Updated `DictionaryFactory.kt` to prevent `killDictionary(file)` from deleting valid dictionary cache files when the native library is not yet loaded.
   - **Log Keeper 2-Tab UI**: Redesigned `LogKeeperActivity.kt` to match the user's reference screenshot: top action bar with back navigation, bold title, Master Switch, Copy icon button, and Download/Export icon button; 2 tabs: **All Logs** and **Errors**; clean card layout with monospace timestamps, component tag badges, colored log level chips, and message text.
 
+- **Phase 17: Emoji Bottom Row Enter Key, Prompt List (Quick Notes) Modal & 2-Minute Temporary Incognito**:
+  - **Emoji Bottom Row Enter Key**: Switched bottom row in `EmojiPalettesView.java` to `KeyboardElement.CLIPBOARD_BOTTOM_ROW` (`[ABC] [Space] [⌫] [↵ / Action]`), giving the emoji modal the same enter/action key as the clipboard modal for instant message sending or line breaks.
+  - **Prompt List (Quick Notes) Modal**: Fully self-contained local notes repository (`PromptDao.kt`, `PromptHistoryView.kt`) with SQLite persistence (`PROMPTS` table) disconnected from system clipboard listeners.
+    - **Move to Prompt List**: Long-pressing any clipboard item offers `📌 Pin/Unpin`, `📥 Move to Prompt List`, and `🗑️ Delete`. Moving to prompt list safely stores the text in `PromptDao` and removes it from clipboard history.
+    - **Prompt Card Interaction**: Tapping any prompt card directly pastes the text into the active field.
+    - **Edit Dialog**: Long-pressing a prompt card offers `📌 Pin/Unpin`, `✏️ Edit`, and `🗑️ Delete`. Selecting `✏️ Edit` opens a full dialog with multiline `EditText`, `Cancel`, and `Save` buttons, with window tokens properly bound to the IME view for normal typing.
+    - **Toolbar Long-Press**: Long-pressing the Copy toolbar button opens the Prompt List modal.
+  - **2-Minute Temporary Incognito Mode**:
+    - **Trigger**: Long-pressing the Incognito toolbar key triggers 2-minute temporary incognito mode (`KeyCode.INCOGNITO_TEMP_2MIN`, `TempIncognitoManager.kt`).
+    - **Timer & Expiration**: Automatically turns off incognito mode after 120,000 ms with feedback Toast.
+    - **Keyboard Close Override**: If the keyboard is closed or hidden at any point while temporary incognito is active, the timer is immediately cancelled and incognito is guaranteed turned off, so when reopened, incognito is OFF.
+
+- **Phase 18: Layout Overhaul, Image 1 Symbol Mapping, French Popup Accents & 3-Page Settings Architecture**:
+  - **Gradle Debug Fallback & Credential Immunity**: Refactored `app/build.gradle.kts` debug signing configuration to check `DEBUG_KEYSTORE_PATH` and dynamically register `customDebug` only if valid, falling back cleanly to the built-in Android debug keystore.
+  - **Image 1 Symbol Top-Right Layout**: Rewrote `qwerty.txt` with exact symbol mapping:
+    - Row 1: `Q(%)`, `W(/)`, `E(|)`, `R(=)`, `T([)`, `Y(])`, `U(*)`, `I(!)`, `O(-)`, `P(;)`
+    - Row 2: `A(@)`, `S(#)`, `D($$$)`, `F(_)`, `G(&)`, `H(-)`, `J(+)`, `K(()`, `L())`
+    - Row 3: `Z(*)`, `X(")`, `C(')`, `V(:)`, `B(;)`, `N(!)`, `M(?)`
+  - **French Accents in Long-Press Popups**: Updated `more_popups_main.txt` to prioritize Latin French accents (`e: é è ê ë ē`, `a: à â æ á ä ã å ā`, `i: î ï í ì ī`, `o: ô œ ö ò ó õ ø ō`, `u: ù û ü ...`) immediately following key symbols.
+  - **Predefined Layout Sidelining**: Restricted `predefined_layouts` in `donottranslate.xml` to `Default` (`qwerty`), moved `azerty.json` and `bepo.txt` into `/sidelined_features/layouts/main/`, and locked `LayoutPickerDialog.kt` to Default + 1 single customizable layout slot.
+  - **Default Currency ₹**: Configured `Defaults.PREF_CUSTOM_CURRENCY_KEY = "₹"` mapping `$$$` on key `d` to Rupee by default.
+  - **3-Parent-Page Settings Architecture**:
+    - **Appearance** (`AppearanceScreen.kt`): Default layout editor, 1 customizable layout slot manager, Currencies quick switch (₹, $, €, ¥), Toolbar key editor, and Desktop Shortcuts modal. Uses `ic_settings_preferences` icon.
+    - **Word Engine** (`WordEngineScreen.kt`): Houses Text Correction (`TextCorrectionScreen`) and Dictionaries (`DictionaryScreen`). Uses `ic_settings_correction` icon.
+    - **Advanced** (`AdvancedSettingsScreen.kt`): Houses Backup & Restore (`BackupRestoreScreen`) and About (`AboutScreen`). Uses `ic_settings_advanced` icon.
+    - **Backup & Restore Sub-Page** (`BackupRestoreScreen.kt`): Unified "Backup All", "Restore All", and backward-compatible "Import HeliBoard Backup" flows with detailed migration confirmation.
+    - **About Updates**: Credited HeliBoard and AOSP in `donottranslate.xml` and About description.
+
 ## 4. Change Ledger
 - **2026-08-27**: Cloned and imported complete source tree from `schuylervianilewis-hash/Vianboardtryagain`.
 - **2026-08-27**: Configured Gradle 9.3.1 / AGP 9.1.1 toolchain, updated `metadata.json`, `settings.gradle.kts`, `gradle/libs.versions.toml`, and `app/build.gradle.kts`.
@@ -70,4 +98,7 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **2026-09-05**: Added Log Keeper 2MB disk auto-rotation and fatal crash dumping directly to device `Download/` folder via MediaStore, guarded `ExpandableBinaryDictionary` and `BinaryDictionary` against uninitialized native JNI calls, and added Log Keeper entry to About screen settings.
 - **2026-09-05**: Implemented Safe Sidelining (non-EN/FR layouts & assets moved to `/sidelined_features/`), locked settings presets (Blue Grey theme, rounded key borders, no tap popup preview, number row with hints, 10m clipboard history, redundant popups removed), calibrated floating popup elevation in `MainKeyboardView.java`, and stripped physical keyboard settings from `AdvancedScreen.kt`.
 - **2026-09-06**: Restored `armeabi-v7a` ABI support for Unisoc hardware, added CI native library compilation in GitHub Actions workflow, guarded `ExpandableBinaryDictionary` against null dictionary pointer crashes, protected dictionary cache from deletion in `DictionaryFactory`, and redesigned Log Keeper UI into a 2-tab view (**All Logs** & **Errors**) matching the reference screenshot.
+- **2026-09-06**: Added Enter / Action key to Emoji modal bottom row (`CLIPBOARD_BOTTOM_ROW`), integrated Prompt List (Quick Notes) with 3-action long press (`Pin`, `Edit`, `Delete`), edit dialog with multiline text field, `Move to Prompt List` clipboard action, Copy toolbar long-press invocation, and implemented 2-minute temporary incognito mode on Incognito toolbar long-press with auto-revert and keyboard-close cancel guarantee.
+- **2026-09-07**: Remediated security scan findings: deleted root `debug.keystore` and `debug.keystore.base64`, sanitized `app/build.gradle.kts` by removing hardcoded plaintext keystore passwords and credentials, loading on-demand from environment variables or gitignored `local.properties`.
+- **2026-09-08**: Implemented layout and settings architecture overhaul: baked Image 1 symbol mapping into `qwerty.txt`, added French Latin accents into `more_popups_main.txt`, set default currency key to `₹`, restricted layouts to Default + 1 customizable slot, streamlined main settings to 3 parent pages (Appearance, Word Engine, Advanced) with dedicated sub-pages for Backup & Restore, and verified complete compilation.
 

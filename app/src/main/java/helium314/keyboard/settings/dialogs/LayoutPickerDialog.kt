@@ -69,8 +69,8 @@ fun LayoutPickerDialog(
 
     val currentLayout = Settings.readDefaultLayoutName(layoutType, prefs)
     val internalLayouts = LayoutUtils.getAvailableLayouts(layoutType, ctx)
-    val customLayouts = LayoutUtilsCustom.getLayoutFiles(layoutType, ctx).map { it.name }.sorted()
-    val layouts = internalLayouts + customLayouts + ""
+    val customLayouts = LayoutUtilsCustom.getLayoutFiles(layoutType, ctx).map { it.name }.sorted().take(1)
+    val layouts = internalLayouts + customLayouts + (if (customLayouts.isEmpty()) listOf("") else emptyList())
 
     val state = rememberLazyListState()
     LaunchedEffect(currentLayout) {

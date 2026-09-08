@@ -3,12 +3,19 @@
 package helium314.keyboard.keyboard.clipboard
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Typeface
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
+import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
@@ -86,7 +93,8 @@ class PromptAdapter(
             val popup = PopupMenu(view.context, view)
             val isPinned = entry.isPinned
             popup.menu.add(0, 1, 0, if (isPinned) "📌 Unpin" else "📌 Pin")
-            popup.menu.add(0, 2, 1, "🗑️ Delete")
+            popup.menu.add(0, 2, 1, "✏️ Edit")
+            popup.menu.add(0, 3, 2, "🗑️ Delete")
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     1 -> {
@@ -95,6 +103,10 @@ class PromptAdapter(
                         true
                     }
                     2 -> {
+                        showEditDialog(view, entry)
+                        true
+                    }
+                    3 -> {
                         val pos = absoluteAdapterPosition
                         if (pos != RecyclerView.NO_POSITION) {
                             promptDao?.removeEntry(pos)
@@ -107,6 +119,80 @@ class PromptAdapter(
             }
             popup.show()
             return true
+        }
+
+        private fun showEditDialog(anchorView: View, entry: PromptEntry) {
+            val context = anchorView.context
+            val dialog = Dialog(context, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+
+            val layout = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                val pad = (16 * context.resources.displayMetrics.density).toInt()
+                setPadding(pad, pad, pad, pad)
+            }
+
+            val titleText = TextView(context).apply {
+                text = "Edit Prompt / Note"
+                textSize = 18f
+                setTypeface(null, Typeface.BOLD)
+                setPadding(0, 0, 0, (12 * context.resources.displayMetrics.density).toInt())
+            }
+            layout.addView(titleText)
+
+            val editText = EditText(context).apply {
+                setText(entry.text)
+                setSelection(text.length)
+                minLines = 5
+                maxLines = 15
+                gravity = Gravity.TOP or Gravity.START
+                val bgPad = (10 * context.resources.displayMetrics.density).toInt()
+                setPadding(bgPad, bgPad, bgPad, bgPad)
+                setBackgroundResource(android.R.drawable.editbox_background_normal)
+            }
+            layout.addView(editText)
+
+            val buttonRow = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.END
+                setPadding(0, (16 * context.resources.displayMetrics.density).toInt(), 0, 0)
+            }
+
+            val cancelButton = Button(context, null, android.R.attr.borderlessButtonStyle).apply {
+                text = "Cancel"
+                setOnClickListener { dialog.dismiss() }
+            }
+
+            val saveButton = Button(context, null, android.R.attr.borderlessButtonStyle).apply {
+                text = "Save"
+                setOnClickListener {
+                    val newText = editText.text.toString().trim()
+                    if (newText.isNotEmpty()) {
+                        promptDao?.updatePrompt(entry.id, newText)
+                        notifyDataSetChanged()
+                    }
+                    dialog.dismiss()
+                }
+            }
+
+            buttonRow.addView(cancelButton)
+            buttonRow.addView(saveButton)
+            layout.addView(buttonRow)
+
+            dialog.setContentView(layout)
+
+            val window = dialog.window
+            if (window != null) {
+                val lp = window.attributes
+                lp.token = anchorView.rootView.windowToken ?: anchorView.windowToken
+                lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG
+                window.attributes = lp
+                window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
+                window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            }
+
+            dialog.show()
+            editText.requestFocus()
         }
     }
 }
@@ -216,6 +302,11 @@ class PromptHistoryView @JvmOverloads constructor(
 
     override fun onPromptMoved(oldPosition: Int, newPosition: Int) {
         promptAdapter.notifyItemMoved(oldPosition, newPosition)
+        updateEmptyView()
+    }
+
+    override fun onPromptUpdated() {
+        promptAdapter.notifyDataSetChanged()
         updateEmptyView()
     }
 

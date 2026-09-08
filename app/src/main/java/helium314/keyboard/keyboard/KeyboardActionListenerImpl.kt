@@ -30,6 +30,7 @@ import helium314.keyboard.latin.utils.BackgroundGatheringCache
 import helium314.keyboard.latin.utils.GestureDataGatheringSettings
 import helium314.keyboard.latin.utils.RecapitalizeMode
 import helium314.keyboard.latin.utils.SubtypeSettings
+import helium314.keyboard.latin.utils.TempIncognitoManager
 import helium314.keyboard.latin.utils.prefs
 import kotlin.math.abs
 
@@ -107,9 +108,18 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
         when (primaryCode) {
             KeyCode.TOGGLE_AUTOCORRECT -> return settings.toggleAutoCorrect()
             KeyCode.TOGGLE_INCOGNITO_MODE -> {
+                TempIncognitoManager.onKeyboardClosed()
                 settings.toggleAlwaysIncognitoMode()
                 BackgroundGatheringCache.clear()
                 latinIME.setGestureDataGatheringMode(latinIME.currentInputEditorInfo, false)
+                return
+            }
+            KeyCode.INCOGNITO_TEMP_2MIN -> {
+                TempIncognitoManager.startTempIncognito(latinIME)
+                return
+            }
+            KeyCode.PROMPT_LIST -> {
+                keyboardSwitcher.setPromptKeyboard()
                 return
             }
             KeyCode.BACKGROUND_GATHERING -> {

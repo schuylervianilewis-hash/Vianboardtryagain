@@ -347,6 +347,14 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
         mPrefs.edit().putBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, !oldValue).apply();
     }
 
+    public void setAlwaysIncognitoMode(final boolean value) {
+        mPrefs.edit().putBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, value).apply();
+    }
+
+    public boolean isAlwaysIncognitoMode() {
+        return mPrefs.getBoolean(Settings.PREF_ALWAYS_INCOGNITO_MODE, Defaults.PREF_ALWAYS_INCOGNITO_MODE);
+    }
+
     public static ToolbarMode readToolbarMode(final SharedPreferences prefs) {
         return ToolbarMode.valueOf(prefs.getString(PREF_TOOLBAR_MODE, Defaults.PREF_TOOLBAR_MODE));
     }

@@ -19,6 +19,7 @@ import helium314.keyboard.latin.settings.getTransitionAnimationScale
 import helium314.keyboard.settings.screens.AboutScreen
 import helium314.keyboard.settings.screens.AdvancedSettingsScreen
 import helium314.keyboard.settings.screens.AppearanceScreen
+import helium314.keyboard.settings.screens.BackupRestoreScreen
 import helium314.keyboard.settings.screens.ColorsScreen
 import helium314.keyboard.settings.screens.DebugScreen
 import helium314.keyboard.settings.screens.DictionaryScreen
@@ -32,6 +33,7 @@ import helium314.keyboard.settings.screens.SecondaryLayoutScreen
 import helium314.keyboard.settings.screens.SubtypeScreen
 import helium314.keyboard.settings.screens.TextCorrectionScreen
 import helium314.keyboard.settings.screens.ToolbarScreen
+import helium314.keyboard.settings.screens.WordEngineScreen
 import helium314.keyboard.settings.screens.gesturedata.GestureDataScreen
 import helium314.keyboard.settings.screens.gesturedata.ReviewScreen
 import kotlinx.coroutines.CoroutineScope
@@ -67,16 +69,15 @@ fun SettingsNavHost(
     ) {
         composable(SettingsDestination.Settings) {
             MainSettingsScreen(
-                onClickAbout = { navController.navigate(SettingsDestination.About) },
-                onClickTextCorrection = { navController.navigate(SettingsDestination.TextCorrection) },
-                onClickPreferences = { navController.navigate(SettingsDestination.Preferences) },
-                onClickToolbar = { navController.navigate(SettingsDestination.Toolbar) },
-                onClickGestureTyping = { navController.navigate(SettingsDestination.GestureTyping) },
-                onClickDataGathering = { navController.navigate(SettingsDestination.DataGathering) },
-                onClickAdvanced = { navController.navigate(SettingsDestination.Advanced) },
                 onClickAppearance = { navController.navigate(SettingsDestination.Appearance) },
-                onClickLanguage = { navController.navigate(SettingsDestination.Languages) },
-                onClickLayouts = { navController.navigate(SettingsDestination.Layouts) },
+                onClickWordEngine = { navController.navigate(SettingsDestination.WordEngine) },
+                onClickAdvanced = { navController.navigate(SettingsDestination.Advanced) },
+                onClickBack = ::goBack,
+            )
+        }
+        composable(SettingsDestination.WordEngine) {
+            WordEngineScreen(
+                onClickTextCorrection = { navController.navigate(SettingsDestination.TextCorrection) },
                 onClickDictionaries = { navController.navigate(SettingsDestination.Dictionaries) },
                 onClickBack = ::goBack,
             )
@@ -103,13 +104,23 @@ fun SettingsNavHost(
             ReviewScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Advanced) {
-            AdvancedSettingsScreen(onClickBack = ::goBack)
+            AdvancedSettingsScreen(
+                onClickBackupRestore = { navController.navigate(SettingsDestination.BackupRestore) },
+                onClickAbout = { navController.navigate(SettingsDestination.About) },
+                onClickBack = ::goBack
+            )
+        }
+        composable(SettingsDestination.BackupRestore) {
+            BackupRestoreScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Debug) {
             DebugScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Appearance) {
-            AppearanceScreen(onClickBack = ::goBack)
+            AppearanceScreen(
+                onClickToolbar = { navController.navigate(SettingsDestination.Toolbar) },
+                onClickBack = ::goBack
+            )
         }
         composable(SettingsDestination.PersonalDictionary + "{locale}") {
             val locale = it.arguments?.getString("locale")?.takeIf { loc -> loc.isNotBlank() }?.constructLocale()
@@ -148,6 +159,8 @@ object SettingsDestination {
     const val Settings = "settings"
     const val About = "about"
     const val TextCorrection = "text_correction"
+    const val WordEngine = "word_engine"
+    const val BackupRestore = "backup_restore"
     const val Preferences = "preferences"
     const val Toolbar = "toolbar"
     const val GestureTyping = "gesture_typing"

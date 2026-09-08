@@ -19,6 +19,7 @@ class PromptDao private constructor(private val db: Database) {
         fun onPromptInserted(position: Int)
         fun onPromptsRemoved(position: Int, count: Int)
         fun onPromptMoved(oldPosition: Int, newPosition: Int)
+        fun onPromptUpdated()
     }
 
     var listener: Listener? = null
@@ -114,6 +115,23 @@ class PromptDao private constructor(private val db: Database) {
             val entry = cache.removeAt(position)
             db.writableDatabase.delete(TABLE, "$COLUMN_ID = ?", arrayOf(entry.id.toString()))
             listener?.onPromptsRemoved(position, 1)
+        }
+    }
+
+    fun updatePrompt(id: Long, newText: String) {
+        synchronized(this) {
+            val index = cache.indexOfFirst { it.id == id }
+            if (index < 0) return
+            val entry = cache[index]
+            val newTitle = newText.take(30).replace("\n", " ").trim()
+            val cv = ContentValues().apply {
+                put(COLUMN_TEXT, newText)
+                put(COLUMN_TITLE, newTitle)
+            }
+            db.writableDatabase.update(TABLE, cv, "$COLUMN_ID = ?", arrayOf(id.toString()))
+            val updated = entry.copy(text = newText, title = newTitle)
+            cache[index] = updated
+            listener?.onPromptUpdated()
         }
     }
 

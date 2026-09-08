@@ -96,7 +96,7 @@ fun BackupRestorePreference(setting: Setting) {
 }
 
 @Composable
-private fun backupLauncher(onError: (String) -> Unit): ManagedActivityResultLauncher<Intent, ActivityResult> {
+fun backupLauncher(onError: (String) -> Unit): ManagedActivityResultLauncher<Intent, ActivityResult> {
     val ctx = LocalContext.current
     return filePicker { uri ->
         // zip all files matching the backup patterns
@@ -165,7 +165,7 @@ private fun backupLauncher(onError: (String) -> Unit): ManagedActivityResultLaun
 }
 
 @Composable
-private fun restoreLauncher(onError: (String) -> Unit): ManagedActivityResultLauncher<Intent, ActivityResult> {
+fun restoreLauncher(onError: (String) -> Unit): ManagedActivityResultLauncher<Intent, ActivityResult> {
     val ctx = LocalContext.current
     return filePicker { uri ->
         val wait = CountDownLatch(1)

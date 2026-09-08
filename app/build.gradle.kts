@@ -24,12 +24,15 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
-  signingConfigs {
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
+  val keystorePath = System.getenv("DEBUG_KEYSTORE_PATH")
+  if (!keystorePath.isNullOrEmpty() && file(keystorePath).exists()) {
+    signingConfigs {
+      create("customDebug") {
+        storeFile = file(keystorePath)
+        storePassword = System.getenv("DEBUG_STORE_PASSWORD") ?: "android"
+        keyAlias = System.getenv("DEBUG_KEY_ALIAS") ?: "androiddebugkey"
+        keyPassword = System.getenv("DEBUG_KEY_PASSWORD") ?: "android"
+      }
     }
   }
 
@@ -39,7 +42,12 @@ android {
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
-    debug { signingConfig = signingConfigs.getByName("debugConfig") }
+    debug {
+      val customDebug = signingConfigs.findByName("customDebug")
+      if (customDebug != null) {
+        signingConfig = customDebug
+      }
+    }
   }
   compileOptions {
     isCoreLibraryDesugaringEnabled = true

@@ -105,6 +105,7 @@ fun getCodeForToolbarKeyLongClick(key: ToolbarKey) = Settings.getInstance().getC
     SELECT_WORD -> KeyCode.CLIPBOARD_SELECT_ALL
     COPY -> KeyCode.PROMPT_LIST
     PASTE -> KeyCode.CLIPBOARD
+    INCOGNITO -> KeyCode.INCOGNITO_TEMP_2MIN
     LEFT -> KeyCode.KEY_REPEAT
     RIGHT -> KeyCode.KEY_REPEAT
     UP -> KeyCode.KEY_REPEAT

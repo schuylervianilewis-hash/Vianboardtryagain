@@ -825,6 +825,10 @@ public final class KeyboardSwitcher implements KeyboardState.SwitchActions {
         return mLatinIME.getLocaleAndConfidenceInfo();
     }
 
+    public LatinIME getLatinIME() {
+        return mLatinIME;
+    }
+
     /** Marks the theme as outdated. The theme will be reloaded next time the keyboard is shown.
      *  If the keyboard is currently showing, theme will be reloaded immediately. */
     public void setThemeNeedsReload() {
