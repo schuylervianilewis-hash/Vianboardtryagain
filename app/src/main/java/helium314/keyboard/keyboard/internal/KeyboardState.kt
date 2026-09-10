@@ -35,6 +35,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
         fun setAlphabetKeyboard(shiftMode: ShiftMode)
         fun setEmojiKeyboard()
         fun setClipboardKeyboard()
+        fun setPromptKeyboard()
         fun setNumpadKeyboard()
         fun setDpadKeyboard()
         fun setSymbolsKeyboard()
@@ -175,6 +176,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
             Utility.SYMBOLS_SHIFTED -> switchActions.setSymbolsShiftedKeyboard()
             Utility.EMOJI -> switchActions.setEmojiKeyboard()
             Utility.CLIPBOARD -> switchActions.setClipboardKeyboard()
+            Utility.PROMPT -> switchActions.setPromptKeyboard()
             Utility.NUMPAD -> switchActions.setNumpadKeyboard()
             Utility.DPAD -> switchActions.setDpadKeyboard()
         }
@@ -478,6 +480,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
             KeyCode.CLIPBOARD -> if (Settings.getValues().mClipboardHistoryEnabled) {
                 toggleLayout(Utility.CLIPBOARD, autoCapsFlags, recapitalizeMode)
             }
+            KeyCode.PROMPT_LIST -> toggleLayout(Utility.PROMPT, autoCapsFlags, recapitalizeMode)
             KeyCode.NUMPAD -> toggleLayout(Utility.NUMPAD, autoCapsFlags, recapitalizeMode)
             KeyCode.DPAD -> toggleLayout(Utility.DPAD, autoCapsFlags, recapitalizeMode)
             KeyCode.SYMBOL -> toggleLayout(Utility.SYMBOLS, autoCapsFlags, recapitalizeMode)
@@ -507,6 +510,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
         SYMBOLS_SHIFTED,
         EMOJI,
         CLIPBOARD,
+        PROMPT,
         NUMPAD,
         DPAD,
     ;
@@ -517,6 +521,7 @@ class KeyboardState(private val switchActions: SwitchActions) {
                 SYMBOLS_SHIFTED -> Utility.SYMBOLS_SHIFTED
                 EMOJI -> Utility.EMOJI
                 CLIPBOARD -> Utility.CLIPBOARD
+                PROMPT -> Utility.PROMPT
                 NUMPAD -> Utility.NUMPAD
                 DPAD -> Utility.DPAD
             }

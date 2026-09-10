@@ -118,10 +118,6 @@ class KeyboardActionListenerImpl(private val latinIME: LatinIME, private val inp
                 TempIncognitoManager.startTempIncognito(latinIME)
                 return
             }
-            KeyCode.PROMPT_LIST -> {
-                keyboardSwitcher.setPromptKeyboard()
-                return
-            }
             KeyCode.BACKGROUND_GATHERING -> {
                 if (BackgroundGatheringCache.isEmpty) {
                     // only enable, no toggle

@@ -95,11 +95,13 @@ class PromptDao private constructor(private val db: Database) {
             if (index < 0) return
             val entry = cache[index]
             val newPinned = !entry.isPinned
+            val now = System.currentTimeMillis()
             val cv = ContentValues().apply {
                 put(COLUMN_PINNED, if (newPinned) 1 else 0)
+                put(COLUMN_TIMESTAMP, now)
             }
             db.writableDatabase.update(TABLE, cv, "$COLUMN_ID = ?", arrayOf(id.toString()))
-            val updated = entry.copy(isPinned = newPinned)
+            val updated = entry.copy(isPinned = newPinned, timestamp = now)
             cache.removeAt(index)
             cache.add(updated)
             cache.sortByDescending { it.timestamp }

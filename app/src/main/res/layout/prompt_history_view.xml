@@ -28,7 +28,7 @@
             android:textSize="14sp"
             tools:ignore="HardcodedText" />
 
-        <helium314.keyboard.keyboard.clipboard.ClipboardHistoryRecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/prompt_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

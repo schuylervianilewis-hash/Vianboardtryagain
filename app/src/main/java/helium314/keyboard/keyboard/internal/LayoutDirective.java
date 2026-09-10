@@ -34,6 +34,7 @@ public sealed interface LayoutDirective {
         SYMBOLS_SHIFTED(KeyboardState.Mode.SYMBOLS_SHIFTED),
         EMOJI(KeyboardState.Mode.EMOJI),
         CLIPBOARD(KeyboardState.Mode.CLIPBOARD),
+        PROMPT(KeyboardState.Mode.PROMPT),
         NUMPAD(KeyboardState.Mode.NUMPAD),
         DPAD(KeyboardState.Mode.DPAD),
     ;

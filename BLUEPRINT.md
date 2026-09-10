@@ -83,6 +83,31 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
     - **Backup & Restore Sub-Page** (`BackupRestoreScreen.kt`): Unified "Backup All", "Restore All", and backward-compatible "Import HeliBoard Backup" flows with detailed migration confirmation.
     - **About Updates**: Credited HeliBoard and AOSP in `donottranslate.xml` and About description.
 
+- **Phase 19: Prompt List Overhaul & Stabilization (Mini-Phases A-D)**:
+  - **Mini-Phase A: Crash Fix & Layout Visibility (Blockers) [COMPLETED]**:
+    - Replaced `ClipboardHistoryRecyclerView` with standard `RecyclerView` in `prompt_history_view.xml`, eliminating the `IndexOutOfBoundsException: Inconsistency detected` crash and redundant adapter notification on removal.
+    - Prevented height collapse when empty by maintaining layout bounds (`View.INVISIBLE` instead of `View.GONE`) and centering the placeholder text.
+    - Hid `mPromptHistoryView` and called `stopPromptHistory()` in `KeyboardSwitcher.java` when switching back to alphabet, symbol, emoji, or clipboard layouts, resolving the transparent ghost overlay.
+    - Applied solid keyboard theme background (`ColorType.MAIN_BACKGROUND`) to `PromptHistoryView`.
+  - **Mini-Phase B: ABC Key & State Machine Integration [COMPLETED]**:
+    - Added `PROMPT` to `LayoutDirective.Utility` and `KeyboardState.Mode`.
+    - Added `setPromptKeyboard()` to `KeyboardState.SwitchActions` and wired `Utility.PROMPT -> switchActions.setPromptKeyboard()` in `KeyboardState.kt`.
+    - Dispatched `KeyCode.PROMPT_LIST` through `KeyboardState.onEvent` via `toggleLayout(Utility.PROMPT)` and removed early return in `KeyboardActionListenerImpl.kt`.
+    - Configured bottom row with `KeyboardLayoutSet.Builder.buildEmojiClipBottomRow(context, editorInfo)` and `PointerTracker.switchTo()` in `PromptHistoryView.kt`.
+    - Implemented `KeyboardSwitchState.PROMPT` in `KeyboardSwitcher.java`, ensuring `resetToAlpha()` cleanly exits prompt mode and restores the alphabet keyboard upon pressing ABC.
+  - **Mini-Phase C: Visual Parity with Clipboard [COMPLETED]**:
+    - Extracted and calculated `KeyDrawParams` (typeface, label color, text size) and passed them to `PromptHistoryView.kt` and `PromptAdapter`.
+    - Applied `ColorType.KEY_BACKGROUND` to prompt note cards and `ColorType.CLIPBOARD_PIN` to pin icon, matching active theme styling 1:1.
+    - Added side padding, keyboard width constraints, and styled `placeholderView` with `KeyboardTypeface` and theme text color.
+    - Updated `PromptDao.togglePinned()` to refresh `timestamp = System.currentTimeMillis()`, bringing pinned items to the very top.
+    - Removed redundant `notifyDataSetChanged()` from pin action, binding smooth `notifyItemMoved()`, `notifyItemChanged()`, and `smoothScrollToPosition()` in `onPromptMoved()`.
+  - **Mini-Phase D: Suggestion Strip Toolbar & Compact Popup Menu [COMPLETED]**:
+    - Integrated dedicated `prompt_strip_scroll_view` and `prompt_strip` in `strip_container.xml` and `KeyboardSwitcher.java`, cleanly isolating prompt toolbar keys from clipboard keys without lifecycle or parent-view collision.
+    - Added full editing and navigation toolbar actions (`UP`, `DOWN`, `LEFT`, `RIGHT`, `UNDO`, `CUT`, `COPY`, `PASTE`, `SELECT_WORD`, `CLOSE_HISTORY`) styled with `ColorType.TOOL_BAR_KEY` and `ColorType.STRIP_BACKGROUND`.
+    - Wired `CLOSE_HISTORY` to dispatch `KeyCode.PROMPT_LIST`, cleanly toggling out of prompt view back to the active alphabet keyboard.
+    - Replaced framework `PopupMenu` with a compact, theme-colored floating `PopupWindow` featuring HeliBoard vector drawables (`ic_clipboard_pin_rounded`, `ic_edit`, `ic_bin_rounded`) with active theme tints (`ColorType.KEY_BACKGROUND`, `ColorType.CLIPBOARD_PIN`, `ColorType.TOOL_BAR_KEY`), 44dp accessible touch targets, and instant touch-outside dismissal.
+    - Verified compilation cleanly via `compile_applet`.
+
 ## 4. Change Ledger
 - **2026-08-27**: Cloned and imported complete source tree from `schuylervianilewis-hash/Vianboardtryagain`.
 - **2026-08-27**: Configured Gradle 9.3.1 / AGP 9.1.1 toolchain, updated `metadata.json`, `settings.gradle.kts`, `gradle/libs.versions.toml`, and `app/build.gradle.kts`.
@@ -101,4 +126,8 @@ VianBoard is a fully customizable, privacy-conscious offline Android keyboard ap
 - **2026-09-06**: Added Enter / Action key to Emoji modal bottom row (`CLIPBOARD_BOTTOM_ROW`), integrated Prompt List (Quick Notes) with 3-action long press (`Pin`, `Edit`, `Delete`), edit dialog with multiline text field, `Move to Prompt List` clipboard action, Copy toolbar long-press invocation, and implemented 2-minute temporary incognito mode on Incognito toolbar long-press with auto-revert and keyboard-close cancel guarantee.
 - **2026-09-07**: Remediated security scan findings: deleted root `debug.keystore` and `debug.keystore.base64`, sanitized `app/build.gradle.kts` by removing hardcoded plaintext keystore passwords and credentials, loading on-demand from environment variables or gitignored `local.properties`.
 - **2026-09-08**: Implemented layout and settings architecture overhaul: baked Image 1 symbol mapping into `qwerty.txt`, added French Latin accents into `more_popups_main.txt`, set default currency key to `₹`, restricted layouts to Default + 1 customizable slot, streamlined main settings to 3 parent pages (Appearance, Word Engine, Advanced) with dedicated sub-pages for Backup & Restore, and verified complete compilation.
+- **2026-09-10**: Completed Phase 19 Mini-Phase A (Crash Fix & Layout Visibility): replaced `ClipboardHistoryRecyclerView` with standard `RecyclerView` in `prompt_history_view.xml` removing swipe conflict, removed double-notify removal in `PromptAdapter`, maintained empty list bounds with `View.INVISIBLE` to prevent height squishing, hidden `mPromptHistoryView` and stopped history in `KeyboardSwitcher.java`, applied solid keyboard theme background (`ColorType.MAIN_BACKGROUND`), verified via `compile_applet`.
+- **2026-09-10**: Completed Phase 19 Mini-Phase B (ABC Key & State Machine Integration): added `PROMPT` to `LayoutDirective.Utility`, `KeyboardState.Mode`, and `KeyboardSwitchState`; added `setPromptKeyboard()` to `SwitchActions`; routed `KeyCode.PROMPT_LIST` through `KeyboardState.onEvent` via `toggleLayout(Utility.PROMPT)`; configured bottom row via `buildEmojiClipBottomRow(context, editorInfo)` and `PointerTracker.switchTo()`; verified ABC key exit back to alphabet typing; verified compilation via `compile_applet`.
+- **2026-09-10**: Completed Phase 19 Mini-Phase C (Visual Parity with Clipboard): extracted `KeyDrawParams` (typeface, label color, text size); styled prompt note cards with `ColorType.KEY_BACKGROUND`, pin icon with `ColorType.CLIPBOARD_PIN`, and empty placeholder with `KeyboardTypeface` and theme text color; added keyboard width constraints and side padding; updated `PromptDao.togglePinned()` to refresh timestamp bringing pinned items to the top; added animated `notifyItemMoved()`, `notifyItemChanged()`, and auto-scroll on pin/unpin; verified compilation via `compile_applet`.
+- **2026-09-10**: Completed Phase 19 Mini-Phase D (Suggestion Strip Toolbar & Compact Popup Menu): added `prompt_strip_scroll_view` in `strip_container.xml` and `KeyboardSwitcher.java`, populated with full editing toolbar keys (`UP`, `DOWN`, `LEFT`, `RIGHT`, `UNDO`, `CUT`, `COPY`, `PASTE`, `SELECT_WORD`, `CLOSE_HISTORY`) styled to keyboard theme; routed `CLOSE_HISTORY` to `KeyCode.PROMPT_LIST` to restore alphabet keyboard; replaced standard framework `PopupMenu` with compact themed `PopupWindow` using HeliBoard vector icons (`ic_clipboard_pin_rounded`, `ic_edit`, `ic_bin_rounded`); verified compilation via `compile_applet`.
 

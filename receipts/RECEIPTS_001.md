@@ -327,3 +327,106 @@
 - **How it was verified**: Full project compilation verified via `compile_applet` (exit code 0, build succeeded in 5s).
 - **Deviation from requested**: None.
 - **Known issue or follow-up needed**: Ready for on-device verification.
+
+---
+
+### Receipt: 2026-09-10 03:05:00
+- **Requested**: "Make file first" — Establish the Rebuild Master Plan and document Phase 19 mini-phases in the Blueprint before code implementation.
+- **Exact files touched**:
+  - `BLUEPRINT.md`
+  - `MASTER_PLAN.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Updated `BLUEPRINT.md` adding Phase 19 (Prompt List Overhaul & Stabilization) divided into 4 atomic mini-phases (A: Crash Fix & Layout Visibility, B: ABC Button State Machine, C: Visual Parity with Clipboard, D: Toolbar Suggestion Strip & Compact Popup Menu).
+  2. Created `MASTER_PLAN.md` fulfilling Mandate 10 (Anti-Bloat Protocol: Rebuild Master Plan) documenting the ideal package structure, single design token pipeline, on-demand lifecycle, and clean Kotlin architecture for future rebuilds.
+- **How it was verified**: Markdown documentation verified via local file tools; no compilation needed for markdown files.
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Ready to implement Mini-Phase A upon explicit user command.
+
+---
+
+### Receipt: 2026-09-10 03:12:00
+- **Requested**: "Implement Mini-Phase A" — Crash Fix & Layout Visibility (Blockers).
+- **Exact files touched**:
+  - `app/src/main/res/layout/prompt_history_view.xml`
+  - `app/src/main/java/helium314/keyboard/keyboard/clipboard/PromptHistoryView.kt`
+  - `app/src/main/java/helium314/keyboard/keyboard/KeyboardSwitcher.java`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Replaced `ClipboardHistoryRecyclerView` with standard `androidx.recyclerview.widget.RecyclerView` in `prompt_history_view.xml` and `PromptHistoryView.kt`, eradicating the fatal `IndexOutOfBoundsException: Inconsistency detected` crash caused by `ClipboardHistoryRecyclerView`'s swipe-to-delete `ItemTouchHelper` invoking clipboard manager on prompt adapter positions.
+  2. Eliminated the redundant second `notifyItemRemoved(pos)` call in `PromptAdapter` delete handler since `promptDao.removeEntry` already triggers `listener.onPromptsRemoved`.
+  3. Fixed empty state height collapse by toggling `promptRecyclerView.visibility = View.INVISIBLE` (instead of `View.GONE`) when empty, maintaining layout height and keeping the empty placeholder centered without collapsing to 35dp.
+  4. Added `mPromptHistoryView.setVisibility(View.GONE)` and `mPromptHistoryView.stopPromptHistory()` across `KeyboardSwitcher.java` (`setKeyboardView`, `setEmojiKeyboard`, `setClipboardKeyboard`, `onToggleKeyboard`, and `deallocateMemory`), eliminating the ghost overlay over the alphabet/symbols keyboard.
+  5. Applied solid keyboard theme background (`Settings.getValues().mColors.setBackground(this, ColorType.MAIN_BACKGROUND)`) when starting `PromptHistoryView`.
+- **How it was verified**: Full project compilation verified via `compile_applet` (exit code 0, build succeeded in 35s).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Ready for on-device manual QA of Mini-Phase A and ready to proceed to Mini-Phase B.
+
+---
+
+### Receipt: 2026-09-10 03:46:00
+- **Requested**: "Implement" — Mini-Phase B: ABC Key & State Machine Integration.
+- **Exact files touched**:
+  - `app/src/main/java/helium314/keyboard/keyboard/internal/LayoutDirective.java`
+  - `app/src/main/java/helium314/keyboard/keyboard/internal/KeyboardState.kt`
+  - `app/src/main/java/helium314/keyboard/keyboard/KeyboardSwitcher.java`
+  - `app/src/main/java/helium314/keyboard/keyboard/KeyboardActionListenerImpl.kt`
+  - `app/src/main/java/helium314/keyboard/latin/inputlogic/InputLogic.java`
+  - `app/src/main/java/helium314/keyboard/keyboard/clipboard/PromptHistoryView.kt`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Added `PROMPT(KeyboardState.Mode.PROMPT)` to `LayoutDirective.Utility`.
+  2. Integrated `PROMPT` into `KeyboardState.kt`: added `setPromptKeyboard()` to `SwitchActions`, added `PROMPT` to `Mode` enum and mapped `Mode.directive()`, added `Utility.PROMPT -> switchActions.setPromptKeyboard()` in `loadLayout()`, and routed `KeyCode.PROMPT_LIST -> toggleLayout(Utility.PROMPT, autoCapsFlags, recapitalizeMode)`.
+  3. Removed early interception of `KeyCode.PROMPT_LIST` in `KeyboardActionListenerImpl.kt` so the keycode is properly dispatched through `latinIME.onEvent(event)` -> `KeyboardSwitcher.onEvent()` -> `KeyboardState.onEvent()`.
+  4. Updated `InputLogic.java` so `KeyCode.PROMPT_LIST` behaves as a layout switch event without premature direct view mutation.
+  5. Added `KeyboardSwitchState.PROMPT` in `KeyboardSwitcher.java`, mapped `isShowingPromptHistory()` to `KeyboardSwitchState.PROMPT`, added prompt re-launch handling to `onToggleKeyboard()` and `reloadMainKeyboard()`, and passed `mLatinIME.getCurrentInputEditorInfo()` into `PromptHistoryView.startPromptHistory()`.
+  6. Updated `PromptHistoryView.kt` to build the bottom row layout via `KeyboardLayoutSet.Builder.buildEmojiClipBottomRow(context, editorInfo)` and bound touch tracking via `PointerTracker.switchTo(it)`, ensuring the ABC key (`KeyCode.ALPHA`) dispatches to `KeyboardState.resetToAlpha()`, which transitions from `Mode.PROMPT` back to `Mode.ALPHABET` and restores the standard keyboard.
+- **How it was verified**: Full project compilation verified via `compile_applet` (exit code 0, build succeeded).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Ready for on-device manual QA of Mini-Phase B and ready to proceed to Mini-Phase C.
+
+---
+
+### Receipt: 2026-09-10 04:02:00
+- **Requested**: "Implement" — Mini-Phase C: Visual Parity with Clipboard, Pin to Top, and Storage Mechanics.
+- **Exact files touched**:
+  - `app/src/main/java/helium314/keyboard/latin/database/PromptDao.kt`
+  - `app/src/main/java/helium314/keyboard/keyboard/clipboard/PromptHistoryView.kt`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Updated `PromptDao.togglePinned()` to refresh `timestamp = System.currentTimeMillis()`, ensuring newly pinned notes immediately rise to the very top (index 0) of the list.
+  2. Extracted keyboard `KeyDrawParams` (typeface, label color, text size) from `keyVisualAttributes` in `PromptHistoryView.startPromptHistory()`.
+  3. Styled `placeholderView` empty state with `KeyboardTypeface.applyToTextView()`, theme label text color, and scaled font sizing matching the clipboard empty state.
+  4. Configured `promptRecyclerView` with keyboard width calculation and scaled left/right side padding derived from `Keyboard_keyboardLeftPadding` / `Keyboard_keyboardRightPadding` attributes.
+  5. Styled `PromptAdapter` note cards with `ColorType.KEY_BACKGROUND`, tinted `pinnedIcon` with `ColorType.CLIPBOARD_PIN`, and applied typeface, text color, and label size to prompt text views.
+  6. Disabled redundant view haptics (`isHapticFeedbackEnabled = false`) on prompt cards.
+  7. Removed disruptive `notifyDataSetChanged()` from the pin popup action in `PromptAdapter`, replacing it with animated `notifyItemMoved()`, `notifyItemChanged()`, and `smoothScrollToPosition()` in `onPromptMoved()` and `onPromptInserted()`.
+- **How it was verified**: Full project compilation verified via `compile_applet` (exit code 0, clean build).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Ready for on-device manual QA of Mini-Phase C and ready to proceed to Mini-Phase D upon user direction.
+
+---
+
+### Receipt: 2026-09-10 04:12:00
+- **Requested**: "Implement" — Mini-Phase D: Suggestion Strip Toolbar & Compact Popup Menu for Prompt List.
+- **Exact files touched**:
+  - `app/src/main/res/layout/strip_container.xml`
+  - `app/src/main/java/helium314/keyboard/keyboard/KeyboardSwitcher.java`
+  - `app/src/main/java/helium314/keyboard/keyboard/clipboard/PromptHistoryView.kt`
+  - `BLUEPRINT.md`
+  - `receipts/RECEIPTS_001.md`
+- **What was actually done**:
+  1. Added `prompt_strip_scroll_view` and `prompt_strip` container to `strip_container.xml`, cleanly isolating the prompt toolbar strip from `clipboard_strip`.
+  2. Wired `mPromptStripView` and `mPromptStripScrollView` in `KeyboardSwitcher.java`, displaying the strip and auto-scrolling to the right upon entering `setPromptKeyboard()`, and hiding it cleanly across alphabet, emoji, and clipboard views.
+  3. Populated `promptStrip` in `PromptHistoryView.kt` with editing and navigation toolbar keys (`UP`, `DOWN`, `LEFT`, `RIGHT`, `UNDO`, `CUT`, `COPY`, `PASTE`, `SELECT_WORD`, `CLOSE_HISTORY`), styled with `ColorType.TOOL_BAR_KEY` and `ColorType.STRIP_BACKGROUND`.
+  4. Wired `CLOSE_HISTORY` key on prompt strip to dispatch `KeyCode.PROMPT_LIST`, toggling out of prompt view and cleanly restoring the alphabet typing layout.
+  5. Replaced standard Android framework `PopupMenu` in `PromptAdapter` with a compact themed floating `PopupWindow` featuring HeliBoard vector drawables (`ic_clipboard_pin_rounded`, `ic_edit`, `ic_bin_rounded`) with active keyboard tints (`ColorType.KEY_BACKGROUND`, `ColorType.CLIPBOARD_PIN`, `ColorType.TOOL_BAR_KEY`), 44dp accessible touch targets, and touch-outside dismissal.
+- **How it was verified**: Full project compilation verified via `compile_applet` (exit code 0, clean build).
+- **Deviation from requested**: None.
+- **Known issue or follow-up needed**: Prompt list overhaul (Mini-Phases A, B, C, D) complete. Ready for on-device user testing.
+
+
+
