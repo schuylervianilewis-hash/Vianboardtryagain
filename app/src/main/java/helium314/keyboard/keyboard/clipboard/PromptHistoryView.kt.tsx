@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-IdentifieSPDX-License-Identifierr: GPL-3.0-only
 
 package helium314.keyboard.keyboard.clipboard
 
@@ -419,7 +419,6 @@ class PromptHistoryView @JvmOverloads constructor(
 
         promptAdapter = PromptAdapter(clipboardLayoutParams) { selectedPrompt ->
             onCommitText(selectedPrompt)
-            keyboardActionListener.onCodeInput(KeyCode.ALPHA, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false)
         }.apply {
             promptDao = this@PromptHistoryView.promptDao
             pinnedIconResId = pinIconId
